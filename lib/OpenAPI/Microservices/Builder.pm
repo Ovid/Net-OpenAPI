@@ -9,7 +9,7 @@ use JSON::Validator::Schema::OpenAPIv3;
 
 use OpenAPI::Microservices::Policy;
 
-use OpenAPI::Microservices::Types qw(
+use OpenAPI::Microservices::Utils::Types qw(
   InstanceOf
   NonEmptyStr
 );

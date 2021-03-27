@@ -1,4 +1,4 @@
-package OpenAPI::Microservices::Types;
+package OpenAPI::Microservices::Utils::Types;
 
 # ABSTRACT: Keep our type tools orgnanized
 
