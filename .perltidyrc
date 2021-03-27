@@ -2,7 +2,7 @@
 #
 # Common parameters
 --break-at-old-comma-breakpoints
---maximum-line-length=78
+--maximum-line-length=160
 --indent-columns=4
 --continuation-indentation=2
 --standard-error-output
