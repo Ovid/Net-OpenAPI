@@ -1,9 +1,9 @@
-package TestsFor::OpenAPI::Microservices::Utils;
+package TestsFor::OpenAPI::Microservices::Utils::Core;
 
 # vim: textwidth=200
 
 use Test::Class::Moose;
-use OpenAPi::Microservices::Utils ':all';
+use OpenAPi::Microservices::Utils::Core ':all';
 
 sub test_resolve_method {
     my $test = shift;

@@ -1,4 +1,6 @@
-package OpenAPi::Microservices::Utils;
+package OpenAPi::Microservices::Utils::Core;
+
+# ABSTRACT: Utilities for munging OpenAPI::Microservices data
 
 use OpenAPI::Microservices::Policy;
 use base 'Exporter';
@@ -7,6 +9,16 @@ our @EXPORT_OK = qw(
   resolve_method
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+
+=head2 C<resolve_method($package_base, $http_method, $path)>
+
+    my ( $package, $method, $args ) = resolve_method(
+        'My::Project::Model',
+        'get',
+        '/store/order/{orderId}'
+    );
+
+=cut
 
 sub resolve_method {
     my ( $base, $http_method, $path ) = @_;
