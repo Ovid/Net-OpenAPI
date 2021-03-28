@@ -10,7 +10,6 @@ use utf8::all;
 use autodie ();
 use Carp;
 use Try::Tiny;
-use namespace::autoclean;
 
 use Import::Into;
 
@@ -35,8 +34,6 @@ sub import {
       unless $skip{'Try::Tiny'};
     Carp->import::into( $caller, qw(carp croak) ) unless $skip{'Carp'};
     autodie->import::into( $caller, ':all' )      unless $skip{'autodie'};
-    namespace::autoclean->import::into($caller)
-      unless $skip{'namespace::autoclean'};
 } ## end sub import
 
 sub unimport {
@@ -47,7 +44,6 @@ sub unimport {
     Try::Tiny->unimport::out_of($caller);
     autodie->unimport::out_of($caller);
     Carp->unimport::out_of($caller);
-    namespace::autoclean->unimport::out_of($caller);
 }
 
 1;
@@ -69,7 +65,6 @@ This module is a replacement for the following:
     use Carp qw(carp croak);
     use autodie ':all';
     use Try::Tiny;
-    use namespace::autoclean;
 
 =head1 Subverting Policy
 
@@ -81,7 +76,7 @@ may pass a list of behaviors to exclude, via the C<except> tag.
     use OpenAPI::Microservices::Policy except => [qw/utf8::all Carp/];
 
     # excluding a single policy doesn't require an array reference
-    use OpenAPI::Microservices::Policy except => 'namespace::autoclean';
+    use OpenAPI::Microservices::Policy except => 'utf8::all';
 
 The following may be excluded:
 
@@ -95,6 +90,18 @@ The following may be excluded:
 
 =item * C<autodie>
 
-=item * C<namespace::autoclean>
-
 =back
+
+=head1 TODO
+
+Add in L<namespace::autoclean>? We previously had it, but when we had
+compilation errors, we went from this:
+
+	Global symbol "$md5" requires explicit package name (did you forget to declare "my $md5"?) at lib/OpenAPI/Microservices/Utils/ReWrite.pm line 108.
+	lib/OpenAPI/Microservices/Utils/ReWrite.pm had compilation errors.
+
+To this:
+
+	lib/OpenAPI/Microservices/Utils/ReWrite.pm had compilation errors.
+
+This made debugging impossible. Removing L<namespace::autoclean> fixed the issue.
