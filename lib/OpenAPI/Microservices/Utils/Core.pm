@@ -65,7 +65,7 @@ sub resolve_method {
         }
     }
     if (@args) {
-        $method = "args_$method";
+        $method = "with_args_$method";
     }
     $method =~ s/_+$//;
     $method =~ s/-/_/g;

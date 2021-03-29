@@ -7,6 +7,8 @@ use warnings;
 use Type::Library
   -base,
   -declare => qw(
+  HTTPMethod
+  MethodName
   PackageName
   );
 
@@ -32,8 +34,15 @@ BEGIN {
 }
 
 my $IDENTIFIER = qr/(?:[A-Z_a-z][0-9A-Z_a-z]*)/;
+
+declare MethodName, as Str,
+  where { $_ =~ / ^ _* $IDENTIFIER $/x };
+
 declare PackageName, as Str,
   where { $_ =~ / ^ $IDENTIFIER (?::: $IDENTIFIER ) * $/x };
+
+# there are more, but these should be the only ones OpenAPI worries about?
+declare HTTPMethod, as Enum [qw/get put post delete patch/];
 
 1;
 
@@ -77,6 +86,14 @@ We automatically include the types from the following:
 =head2 C<PackageName>
 
 Matches valid package names.
+
+=head2 C<MethodName>
+
+Matches valid method names.
+
+=head2 C<HTTPMethod>
+
+Valid HTTP methods for OpenAPI.
 
 =head1 EXTRAS
 

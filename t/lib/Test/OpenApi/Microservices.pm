@@ -6,6 +6,7 @@ package Test::OpenAPI::Microservices;
 
 use Test::Class::Moose;
 use OpenAPI::Microservices::Policy;
+with 'Test::Class::Moose::Role::AutoUse';
 
 sub is_multiline_text {
     my ( $test, $text, $expected, $message ) = @_;
