@@ -78,8 +78,7 @@ sub write {
                 $path,
             );
             my $package = $self->packages->{$package_name} //= OpenAPI::Microservices::Builder::Package->new( name => $package_name, base => $base );
-            my $method = $package->add_method(http_method=> $http_method, path => $path);
-            say $method->to_string;
+            $package->add_method(http_method=> $http_method, path => $path);
         }
     );
 }

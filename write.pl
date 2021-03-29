@@ -10,3 +10,8 @@ my $builder = OpenAPi::Microservices::Builder->new(
     to     => 'target',
 );
 $builder->write;
+
+my $packages = $builder->packages;
+foreach my $package (values %$packages) {
+    say $package->to_string;
+}

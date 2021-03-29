@@ -17,6 +17,10 @@ use OpenAPI::Microservices::Utils::Types qw(
   PackageName
 );
 
+with qw(
+  OpenAPI::Microservices::Builder::Role::ToString
+);
+
 has name => (
     is       => 'ro',
     isa      => PackageName,
@@ -35,6 +39,25 @@ has methods => (
     default  => sub { {} },
     init_arg => undef,
 );
+
+sub get_methods { return [ values %{ $_[0]->methods } ] }
+
+sub _fields { qw/name get_methods/ }
+
+sub _template {
+    return <<'END';
+package [% name %];
+
+use strict;
+use warnings;
+
+[% FOREACH method IN get_methods %]
+[% method.to_string %]
+[% END %]
+
+1;
+END
+}
 
 sub has_method {
     my ( $self, $method_name ) = @_;
