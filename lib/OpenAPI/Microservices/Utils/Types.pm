@@ -4,7 +4,12 @@ package OpenAPI::Microservices::Utils::Types;
 
 use strict;
 use warnings;
-use Type::Library -base;
+use Type::Library
+  -base,
+  -declare => qw(
+  PackageName
+  );
+
 use Type::Utils -all;
 
 # this gets us compile and compile_named
@@ -25,6 +30,10 @@ BEGIN {
         'compile_named',    # from Type::Params
     );
 }
+
+my $IDENTIFIER = qr/(?:[A-Z_a-z][0-9A-Z_a-z]*)/;
+declare PackageName, as Str,
+  where { $_ =~ / ^ $IDENTIFIER (?::: $IDENTIFIER ) * $/x };
 
 1;
 
@@ -62,6 +71,12 @@ We automatically include the types from the following:
 =item * L<Types::Common::String>
 
 =back
+
+=head1 CUSTOME TYPES
+
+=head2 C<PackageName>
+
+Matches valid package names.
 
 =head1 EXTRAS
 
