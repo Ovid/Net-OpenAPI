@@ -7,8 +7,33 @@ use base 'Exporter';
 
 our @EXPORT_OK = qw(
   resolve_method
+  trim
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+
+=head1 FUNCTIONS
+
+All functions are exportable on demand via:
+
+    use OpenAPi::Microservices::Utils::Core 'trim';
+
+Or all at once:
+
+    use OpenAPi::Microservices::Utils::Core ':all';
+
+=head2 C<trim($text)>
+
+    my $trimmed = trim($text);
+
+Trims leading and trailing whitespace from C<$text>.
+
+=cut
+
+sub trim {
+    my $text = shift;
+    $text =~ s/^\s+|\s+$//g;
+    return $text;
+}
 
 =head2 C<resolve_method($package_base, $http_method, $path)>
 
