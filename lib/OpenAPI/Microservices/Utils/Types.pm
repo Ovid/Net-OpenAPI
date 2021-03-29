@@ -7,6 +7,7 @@ use warnings;
 use Type::Library
   -base,
   -declare => qw(
+  Directory
   HTTPMethod
   MethodName
   PackageName
@@ -33,13 +34,17 @@ BEGIN {
     );
 }
 
+my $DIR = qr/[-a-zA-Z0-9_]+/;
+declare Directory, as Str,
+  where { m<^( ?: \./? )? $DIR (?:/$DIR)* /? >x };
+
 my $IDENTIFIER = qr/(?:[A-Z_a-z][0-9A-Z_a-z]*)/;
 
 declare MethodName, as Str,
-  where { $_ =~ / ^ _* $IDENTIFIER $/x };
+  where { / ^ _* $IDENTIFIER $/x };
 
 declare PackageName, as Str,
-  where { $_ =~ / ^ $IDENTIFIER (?::: $IDENTIFIER ) * $/x };
+  where { / ^ $IDENTIFIER (?::: $IDENTIFIER ) * $/x };
 
 # there are more, but these should be the only ones OpenAPI worries about?
 declare HTTPMethod, as Enum [qw/get put post delete patch/];
@@ -94,6 +99,10 @@ Matches valid method names.
 =head2 C<HTTPMethod>
 
 Valid HTTP methods for OpenAPI.
+
+-head2 C<Directory>
+
+Valid directory name. Generally must be C<\w+> separated by C</>. A single leading dot is permitted.
 
 =head1 EXTRAS
 
