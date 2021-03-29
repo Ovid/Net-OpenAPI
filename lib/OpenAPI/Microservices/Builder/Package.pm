@@ -50,6 +50,7 @@ package [% name %];
 
 use strict;
 use warnings;
+use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
 
 [% FOREACH method IN get_methods %]
 [% method.to_string %]

@@ -50,9 +50,11 @@ sub _template {
     return <<'END';
 # [% http_method %] [% path %]
 sub [% name %] {
-    my $self = shift;
-    my %arg_for = @_;
-    # add code here
+    my $self        = shift;
+    my $http_method = $self->http_method;
+    my $path        = $self->path;
+    my %arg_for     = @_;
+    OpenAPI::Microservices::Exceptions::HTTP::NotImplemented->throw("$http_method $path");
 }
 END
 }
