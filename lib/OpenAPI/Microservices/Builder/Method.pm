@@ -48,13 +48,16 @@ sub _fields { qw/name path http_method arguments/ }
 sub _template {
     my $self = shift;
     return <<'END';
-# [% http_method %] [% path %]
+=head2 C<[% name %]>
+
+Route: [% http_method %] [% path %]
+
+=cut
+
 sub [% name %] {
-    my $self        = shift;
-    my $http_method = $self->http_method;
-    my $path        = $self->path;
-    my %arg_for     = @_;
-    OpenAPI::Microservices::Exceptions::HTTP::NotImplemented->throw("$http_method $path");
+    my $self = shift;
+    my ($request, $params) = @_;
+    OpenAPI::Microservices::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
 }
 END
 }

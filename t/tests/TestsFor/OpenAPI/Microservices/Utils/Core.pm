@@ -2,8 +2,9 @@ package TestsFor::OpenAPI::Microservices::Utils::Core;
 
 # vim: textwidth=200
 
-use Test::Class::Moose;
-use OpenAPi::Microservices::Utils::Core ':all';
+use OpenAPI::Microservices::Policy;
+use OpenAPI::Microservices::Utils::Core ':all';
+use Test::Class::Moose;    # extends => 'Test::OpenApi::Microservices';
 
 sub test_resolve_method {
     my $test = shift;
@@ -20,17 +21,20 @@ sub test_resolve_method {
             '/user/login'            => [ 'My::Project::Model::User',  'get_login' ],
             '/user/logout'           => [ 'My::Project::Model::User',  'get_logout' ],
             '/user/{username}'       => [ 'My::Project::Model::User',  'with_args_get', [qw/username/] ],
+
+            # 시티 is Korean for "city"
+            '/시티' => [ 'My::Project::Model::Siti', 'get' ],
         },
         delete => {
             '/pet/{petId}'           => [ 'My::Project::Model::Pet',   'with_args_delete',       ['petId'] ],
             '/store/order/{orderId}' => [ 'My::Project::Model::Store', 'with_args_delete_order', [qw/orderId/] ],
             '/store/order'           => [ 'My::Project::Model::Store', 'delete_order' ],
             '/store/order/'          => [ 'My::Project::Model::Store', 'delete_order' ],
-            '/user/{username}'       => [ 'My::Project::Model::User',  'with_args_delete', ['username'] ],
+            '/user/{username}' => [ 'My::Project::Model::User', 'with_args_delete', ['username'] ],
         },
         post => {
             '/pet'                     => [ 'My::Project::Model::Pet',   'post' ],
-            '/pet/{petId}'             => [ 'My::Project::Model::Pet',   'with_args_post',               ['petId'] ],
+            '/pet/{petId}'             => [ 'My::Project::Model::Pet',   'with_args_post', ['petId'] ],
             '/pet/{petId}/uploadImage' => [ 'My::Project::Model::Pet',   'with_args_post___uploadImage', ['petId'] ],
             '/store/order'             => [ 'My::Project::Model::Store', 'post_order' ],
             '/user'                    => [ 'My::Project::Model::User',  'post' ],
@@ -58,6 +62,15 @@ sub test_resolve_method {
             eq_or_diff $args, $expected_args,   "... and it should give us the correct arguments: @$expected_args";
         }
     }
+}
+
+sub test_get_path_prefix {
+    my $test   = shift;
+    my $prefix = get_path_prefix('/시티/foo');
+    is $prefix, 'Siti', 'We should be able to fetch prefixes of paths';
+
+    $prefix = get_path_prefix('/pet-Semetary/foo');
+    is $prefix, 'PetSemetary', '... and get names suitable for using in classes';
 }
 
 1;

@@ -3,7 +3,7 @@
 * Document generation (https://nordicapis.com/7-open-source-openapi-documentation-generators/)
 * Testing
 * Logging
-* HTTP Exceptions
+* Text::UniDecode to allow for non-ascii routes
 * Versioning (OpenAPI v1 and v2)
 * Versioning (app versioning)
 * Hooks to run multiple apps

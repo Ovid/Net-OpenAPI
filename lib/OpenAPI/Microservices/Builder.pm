@@ -1,24 +1,26 @@
-package OpenAPi::Microservices::Builder;
+package OpenAPI::Microservices::Builder;
 
 # ABSTRACT: Build our framework stub
 
 use Moo;
-use Mojo::File;
+use Mojo::File qw(path);
 use Mojo::JSON 'decode_json';
 use JSON::Validator::Schema::OpenAPIv3;
 
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Package;
 
-use OpenAPi::Microservices::Utils::Core qw(
+use OpenAPI::Microservices::Utils::Core qw(
   resolve_method
 );
 use OpenAPI::Microservices::Utils::Types qw(
+  Directory
   HashRef
   InstanceOf
   NonEmptyStr
   PackageName
 );
+use namespace::autoclean;
 
 has base => (
     is       => 'ro',
@@ -43,9 +45,9 @@ has _validator => (
     },
 );
 
-has to => (
+has dir => (
     is       => 'ro',
-    isa      => NonEmptyStr,
+    isa      => Directory,
     required => 1,
 );
 
@@ -79,8 +81,91 @@ sub write {
             );
             my $package = $self->packages->{$package_name} //= OpenAPI::Microservices::Builder::Package->new( name => $package_name, base => $base );
             $package->add_method(http_method=> $http_method, path => $path);
+            $self->_write_package($package);
         }
     );
+    $self->_write_driver;
 }
 
+sub _write_package {
+    my ( $self, $package ) = @_;
+    my $package_name = $package->name;
+
+    my ( $base, $filename );
+    if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
+        $base = $+{path};
+        $filename = $+{file};
+        $base =~ s{::}{/}g;
+    }
+    else {
+        croak("Bad package name: $package_name");
+    }
+
+    $filename .= ".pm";
+    my $path = path( $self->dir . "/lib/$base" )->make_path;
+    $path->make_path->child($filename)->spurt($package->to_string);
+}
+
+sub _write_driver {
+    my $self = shift;
+
+   my $code = <<'END';
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Scalar::Util 'blessed';
+use lib '../lib'; # XXX fix me (load OpenAPI::Microservices::*)
+
+use Plack::Request;
+use OpenAPI::Microservices::App::Router;
+
+END
+
+    my $routes = '';
+    my @packages = map { $_->name } values %{$self->packages};
+    foreach my $package (@packages) {
+        $code .= "use $package;\n";
+        $routes .= "\$router->add_route(\$_) foreach $package->routes;\n";
+    }
+    $code .= <<"END";
+
+my \$router = OpenAPI::Microservices::App::Router->new;
+$routes
+
+END
+    $code .= <<'END';
+sub {
+    my $req   = Plack::Request->new(shift);
+    my $match = $router->match($req)
+        or return $req->new_response(404)->finalize;
+
+    my $controller = $match->{controller};
+    my $action = $controller->can($match->{action})
+        or return $req->new_response(405)->finalize;
+    my $res;
+    if ( eval { $res = $controller->$action($req, $match); 1 } ) {
+        $res->finalize;
+    }
+    else {
+        my $error = $@;
+        my $res;
+        if ( blessed $error ) {
+            $res = $req->new_response($error->status_code);
+            if ( my $info = $error->info ) {
+                $res->content_type('text/plain');
+                $res->body($info);
+            }
+        }
+        else {
+            $res = $req->new_response(500);
+        }
+        $res->finalize;
+    }
+};
+
+END
+    my $path = path( $self->dir . "/script" )->make_path;
+    $path->make_path->child('app.psgi')->spurt($code);
+}
 1;

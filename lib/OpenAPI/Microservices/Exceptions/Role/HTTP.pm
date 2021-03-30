@@ -20,14 +20,14 @@ has stacktrace => (
     isa => InstanceOf ['Devel::StackTrace'],
 );
 
-has additional_message => (
+has info => (
     is        => 'rwp',
     isa       => NonEmptyStr,
     predicate => 1,
 );
 
 sub throw {
-    my ( $self, $additional_message ) = @_;
+    my ( $self, $info ) = @_;
     if ( not ref $self ) {
         $self = $self->new;
 
@@ -38,22 +38,15 @@ sub throw {
     }
 
     # don't let a rethrow overwrite the original message
-    if ( defined $additional_message && !$self->has_additional_message ) {
-        $self->_set_additional_message($additional_message);
+    if ( defined $info && !$self->has_info ) {
+        $self->_set_info($info);
     }
     die $self;
 }
 
 sub to_string {
     my $self = shift;
-    return sprintf( "%s\n\n%s", $self->status, $self->stacktrace->as_string, );
-}
-
-sub status {
-    my $self = shift;
-    return $self->has_additional_message
-      ? sprintf( "%d %s (%s)", $self->status_code, $self->message, $self->additional_message )
-      : sprintf( "%d %s", $self->status_code, $self->message );
+    return sprintf( "%d %s", $self->status_code, $self->message );
 }
 
 1;

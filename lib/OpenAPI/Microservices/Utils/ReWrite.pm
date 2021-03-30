@@ -2,7 +2,7 @@ package OpenAPI::Microservices::Utils::ReWrite;
 
 use Moo;
 use Mojo::File;
-use OpenAPi::Microservices::Utils::Core qw(
+use OpenAPI::Microservices::Utils::Core qw(
   trim
 );
 use OpenAPI::Microservices::Utils::Types qw(

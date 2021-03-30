@@ -4,7 +4,8 @@ use Moo;
 
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Method;
-use OpenAPi::Microservices::Utils::Core qw(resolve_method);
+use OpenAPI::Microservices::Utils::ReWrite;
+use OpenAPI::Microservices::Utils::Core qw(resolve_method);
 use OpenAPI::Microservices::Utils::Types qw(
   compile_named
   compile
@@ -42,7 +43,30 @@ has methods => (
 
 sub get_methods { return [ values %{ $_[0]->methods } ] }
 
-sub _fields { qw/name get_methods/ }
+sub _fields { qw/name get_methods routes/ }
+
+sub routes {
+        my $self = shift;
+    
+       my $code = '';
+       my $controller = $self->name;
+        foreach my $method ( @{$self->get_methods} ) {
+            my $http_method = $method->http_method;
+            my $path = $method->path;
+            my $name = $method->name;
+            $code .= "        { path => '$path', http_method => '$http_method', controller => '$controller',  action => '$name' },\n";
+        }
+        chomp($code);
+        $code = <<"END";
+sub routes {
+    return (
+$code
+    );
+}
+END
+    my $rewrite = OpenAPI::Microservices::Utils::ReWrite->new( new_text => $code );
+    return $rewrite->rewritten;
+}
 
 sub _template {
     return <<'END';
@@ -52,6 +76,13 @@ use strict;
 use warnings;
 use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
 
+[% routes %]
+
+=head1 NAME
+
+[% name %]
+
+=head1 METHODS
 [% FOREACH method IN get_methods %]
 [% method.to_string %]
 [% END %]
@@ -96,46 +127,3 @@ sub add_method {
 }
 
 1;
-__END__
-=for pod
-
-post /pet (addPet)
-    My::Project::OpenAPI::Model::Pet post
-put /pet (updatePet)
-    My::Project::OpenAPI::Model::Pet put
-post /user (createUser)
-    My::Project::OpenAPI::Model::User post
-get /user/login (loginUser)
-    My::Project::OpenAPI::Model::User get_login
-get /user/logout (logoutUser)
-    My::Project::OpenAPI::Model::User get_logout
-post /store/order (placeOrder)
-    My::Project::OpenAPI::Model::Store post_order
-get /pet/findByTags (findPetsByTags)
-    My::Project::OpenAPI::Model::Pet get_findByTags
-get /store/inventory (getInventory)
-    My::Project::OpenAPI::Model::Store get_inventory
-get /pet/findByStatus (findPetsByStatus)
-    My::Project::OpenAPI::Model::Pet get_findByStatus
-post /user/createWithList (createUsersWithListInput)
-    My::Project::OpenAPI::Model::User post_createWithList
-delete /pet/{petId} (deletePet)
-    My::Project::OpenAPI::Model::Pet args_delete petId
-get /pet/{petId} (getPetById)
-    My::Project::OpenAPI::Model::Pet args_get petId
-post /pet/{petId} (updatePetWithForm)
-    My::Project::OpenAPI::Model::Pet args_post petId
-delete /user/{username} (deleteUser)
-    My::Project::OpenAPI::Model::User args_delete username
-get /user/{username} (getUserByName)
-    My::Project::OpenAPI::Model::User args_get username
-put /user/{username} (updateUser)
-    My::Project::OpenAPI::Model::User args_put username
-delete /store/order/{orderId} (deleteOrder)
-    My::Project::OpenAPI::Model::Store args_delete_order orderId
-get /store/order/{orderId} (getOrderById)
-    My::Project::OpenAPI::Model::Store args_get_order orderId
-post /pet/{petId}/uploadImage (uploadFile)
-    My::Project::OpenAPI::Model::Pet args_post___uploadImage petId
-
-=cut

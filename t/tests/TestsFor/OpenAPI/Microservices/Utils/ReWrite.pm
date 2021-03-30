@@ -4,7 +4,7 @@ package TestsFor::OpenAPI::Microservices::Utils::ReWrite;
 
 use Test::Class::Moose extends => 'Test::OpenAPI::Microservices';
 use OpenAPI::Microservices::Utils::ReWrite;
-use OpenAPi::Microservices::Utils::Core ':all';
+use OpenAPI::Microservices::Utils::Core ':all';
 
 sub test_rewrite {
     my $test = shift;
