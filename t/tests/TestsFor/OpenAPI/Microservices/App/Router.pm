@@ -23,8 +23,8 @@ sub test_routing {
         my ( $method, $path ) = @{$route}{qw/http_method path/};
         ok $router->add_route($route), "We should be able to add routes to our router: $method $path";
     }
-    throws_ok { $DB::single = 1;$router->add_route( $routes[0] ) }
-    qr{Route for get /pet already addedr},
+    throws_ok { $router->add_route( $routes[0] ) }
+    qr{Route for POST /pet already added},
       'Trying to add a duplicate route should fail';
 }
 

@@ -4,6 +4,7 @@ package OpenAPI::Microservices::App::Router;
 
 use 5.16.0;
 use Moo;
+use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Utils::Core qw(
   get_path_prefix
 );
@@ -40,8 +41,8 @@ sub add_route {
     my $http_method  = uc $route->{http_method};
     my $these_routes = $routes->{$http_method} //= {};
 
-    if ( exists $these_routes->{$path} ) {
-        croak("Route for $http_method $these_routes already added");
+    if ( exists $these_routes->{$segments}{$prefix}{$path} ) {
+        croak("Route for $http_method $path already added");
     }
     $these_routes->{$segments}{$prefix}{$path} = $route;
 }
