@@ -46,7 +46,7 @@ sub throw {
 
 sub to_string {
     my $self = shift;
-    return sprintf( "%d %s", $self->status_code, $self->message );
+    return sprintf( "%d %s\n\n%s", $self->status_code, $self->message, $self->stacktrace );
 }
 
 1;
