@@ -2,23 +2,37 @@
 
 use v5.16.0;
 use Getopt::Long;
+use lib qw(lib t/lib t/tests);
+
+use Test::Class::Moose::Load 't/tests';
+use Test::Class::Moose::Runner;
+use Test2::Plugin::UTF8;
+
 GetOptions(
     \my %opt_for,
     'method=s',
 ) or die "Bad options";
-use lib qw(lib t/lib);
 
-use Test::Class::Moose::Load 't/tests';
-use Test::Class::Moose::Runner;
 my %args;
 
 if (@ARGV) {
-    $args{test_classes} => \@ARGV,;
+    $args{test_classes} = [ map { path_to_class($_) } @ARGV ];
 }
 if ( my $method = $opt_for{method} ) {
-    $args{include} = qr/$method/,;
+    $args{include} = qr/$method/;
 }
 Test::Class::Moose::Runner->new(%args)->runtests;
+
+sub path_to_class {
+    my $path = shift;
+
+    # if we don't end in a .pm, it's probably a class name
+    return $path unless $path =~ s/\.pm$//;
+    $path =~ s{.*(?=TestsFor)}{};
+    $path =~ s/\.pm$//;
+    $path =~ s{/}{::}g;
+    return $path;
+}
 
 __END__
 
