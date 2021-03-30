@@ -67,7 +67,7 @@ sub write {
     }
 
     my $routes = $schema->routes;
-    my $base = $self->base;
+    my $base   = $self->base;
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
@@ -101,7 +101,7 @@ sub _write_package {
 
     my ( $base, $filename );
     if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
-        $base = $+{path};
+        $base     = $+{path};
         $filename = $+{file};
         $base =~ s{::}{/}g;
     }
@@ -111,13 +111,13 @@ sub _write_package {
 
     $filename .= ".pm";
     my $path = path( $self->dir . "/lib/$base" )->make_path;
-    $path->make_path->child($filename)->spurt($package->to_string);
+    $path->make_path->child($filename)->spurt( $package->to_string );
 }
 
 sub _write_driver {
     my $self = shift;
 
-   my $code = <<'END';
+    my $code = <<'END';
 #!/usr/bin/env perl
 
 use strict;
@@ -130,10 +130,10 @@ use OpenAPI::Microservices::App::Router;
 
 END
 
-    my $routes = '';
-    my @packages = map { $_->name } values %{$self->packages};
+    my $routes   = '';
+    my @packages = map { $_->name } values %{ $self->packages };
     foreach my $package (@packages) {
-        $code .= "use $package;\n";
+        $code   .= "use $package;\n";
         $routes .= "\$router->add_route(\$_) foreach $package->routes;\n";
     }
     $code .= <<"END";
