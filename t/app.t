@@ -16,7 +16,11 @@ GetOptions(
 my %args;
 
 if (@ARGV) {
-    $args{test_classes} = [ map { path_to_class($_) } @ARGV ];
+    $args{test_classes} = [
+        map    { path_to_class($_) }    # if they give us paths, use class names
+          grep { $_ ne '::' }           # but don't include the '::' if they run this with Perl instead of prove
+          @ARGV                         # and take this from command line args
+    ];
 }
 if ( my $method = $opt_for{method} ) {
     $args{include} = qr/$method/;
@@ -50,6 +54,9 @@ t/app.t - Run xUnit tests
 
     # run a single test class
     prove -v t/app.t :: TestsFor::OpenAPI::Microservices::Utils::ReWrite
+
+    # run a single test class
+    prove -v t/app.t :: t/tests/TestsFor/OpenAPI/Microservices/Utils/ReWrite.pm
 
     # run test methods matching regex "test_rewrite"
     prove -v t/app.t :: TestsFor::OpenAPI::Microservices::Utils::ReWrite --method test_rewrite
