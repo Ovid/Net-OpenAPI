@@ -37,13 +37,19 @@ has http_method => (
     required => 1,
 );
 
+has description => (
+    is       => 'ro',
+    isa      => NonEmptyStr,
+    required => 1,
+);
+
 has arguments => (
     is       => 'ro',
     isa      => ArrayRef [NonEmptyStr],
     required => 1,
 );
 
-sub _fields { qw/name path http_method arguments/ }
+sub _fields { qw/name path http_method arguments description/ }
 
 sub _template {
     my $self = shift;
@@ -51,6 +57,8 @@ sub _template {
 =head2 C<[% name %]>
 
 Route: [% http_method %] [% path %]
+
+[% description %]
 
 =cut
 

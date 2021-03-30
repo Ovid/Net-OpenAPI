@@ -103,6 +103,7 @@ sub add_method {
     state $check = compile_named(
         http_method => HTTPMethod,
         path        => NonEmptyStr,
+        description => NonEmptyStr,
     );
     my $arg_for = $check->(@_);
 
@@ -120,6 +121,7 @@ sub add_method {
         name        => $method_name,
         path        => $arg_for->{path},
         http_method => $arg_for->{http_method},
+        description => $arg_for->{description},
         arguments   => ( $args || [] )
     );
     $self->methods->{$method_name} = $method;

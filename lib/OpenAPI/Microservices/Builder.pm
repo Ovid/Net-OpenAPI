@@ -74,13 +74,21 @@ sub write {
             my $http_method  = $route->{method};
             my $operation_id = $route->{operation_id};
             my $path         = $route->{path};
+            my $description
+              = $schema->get(  [ "paths", $path, $http_method, "description" ] )
+              || $schema->get( [ "paths", $path, $http_method, "summary" ] )
+              || 'No description found';
             my ( $package_name, $method_name, $args ) = resolve_method(
                 $base,
                 $http_method,
                 $path,
             );
             my $package = $self->packages->{$package_name} //= OpenAPI::Microservices::Builder::Package->new( name => $package_name, base => $base );
-            $package->add_method(http_method=> $http_method, path => $path);
+            $package->add_method(
+                http_method => $http_method,
+                path        => $path,
+                description => $description,
+            );
             $self->_write_package($package);
         }
     );
