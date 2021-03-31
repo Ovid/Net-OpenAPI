@@ -121,8 +121,12 @@ distribution.
 
 sub tidy_code {
     my $code = shift;
+
     my ( $stderr, $tidied );
 
+    # need to clear @ARGV or else Perl::Tidy thinks you're trying
+    # to provide a filename and dies
+    local @ARGV;
     perltidy(
         source      => \$code,
         destination => \$tidied,
