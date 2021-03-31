@@ -1,7 +1,7 @@
 package OpenAPI::Microservices::Builder::Method;
 
 use Moo;
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
   ArrayRef
   HTTPMethod
   InstanceOf

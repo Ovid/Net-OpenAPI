@@ -5,7 +5,7 @@ use Mojo::File;
 use OpenAPI::Microservices::Utils::Core qw(
   trim
 );
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
   Bool
   NonEmptyStr
 );

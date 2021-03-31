@@ -1,4 +1,4 @@
-package OpenAPI::Microservices::Utils::Types;
+package OpenAPI::Microservices::App::Types;
 
 # ABSTRACT: Keep our type tools orgnanized
 
@@ -90,7 +90,7 @@ We automatically include the types from the following:
 
 =back
 
-=head1 CUSTOME TYPES
+=head1 CUSTOM TYPES
 
 =head2 C<PackageName>
 

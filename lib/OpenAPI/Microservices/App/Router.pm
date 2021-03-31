@@ -5,7 +5,7 @@ package OpenAPI::Microservices::App::Router;
 use 5.16.0;
 use Moo;
 use OpenAPI::Microservices::Policy;
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
     compile
     Dict
     HTTPMethod

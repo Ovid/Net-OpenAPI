@@ -6,7 +6,7 @@ use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Method;
 use OpenAPI::Microservices::Utils::ReWrite;
 use OpenAPI::Microservices::Utils::Core qw(resolve_method);
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
   compile_named
   compile
   MethodName

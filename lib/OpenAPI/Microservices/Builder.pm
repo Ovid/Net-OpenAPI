@@ -13,7 +13,7 @@ use OpenAPI::Microservices::Builder::Package;
 use OpenAPI::Microservices::Utils::Core qw(
   resolve_method
 );
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
   Directory
   HashRef
   InstanceOf

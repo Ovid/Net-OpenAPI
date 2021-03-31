@@ -4,7 +4,7 @@ package OpenAPI::Microservices::Exceptions::Role::HTTP;
 
 use Moo::Role;
 use OpenAPI::Microservices::Policy;
-use OpenAPI::Microservices::Utils::Types qw(
+use OpenAPI::Microservices::App::Types qw(
   InstanceOf
   NonEmptyStr
 );
