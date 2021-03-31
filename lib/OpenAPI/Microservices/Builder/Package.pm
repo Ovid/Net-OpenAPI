@@ -5,7 +5,7 @@ use Moo;
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Method;
 use OpenAPI::Microservices::Utils::ReWrite;
-use OpenAPI::Microservices::Utils::Core qw(resolve_method);
+use OpenAPI::Microservices::Utils::Core qw(resolve_method tidy_code);
 use OpenAPI::Microservices::Utils::File qw(write_file);
 use OpenAPI::Microservices::App::Types qw(
   compile_named
@@ -51,14 +51,14 @@ sub routes {
 
     my $code       = '';
     my $controller = $self->name;
-    foreach my $method ( @{ $self->get_methods } ) {
+    foreach my $method ( sort { length( $a->path ) <=> length( $b->path ) } @{ $self->get_methods } ) {
         my $http_method = $method->http_method;
         my $path        = $method->path;
         my $name        = $method->name;
         $code .= "        { path => '$path', http_method => '$http_method', controller => '$controller',  action => '$name' },\n";
     }
     chomp($code);
-    $code = <<"END";
+    $code = tidy_code(<<"END");
 sub routes {
     return (
 $code
@@ -88,7 +88,7 @@ sub write {
     write_file(
         path     => $path,
         file     => $filename,
-        document => $self->to_string,
+        document => tidy_code($self->to_string),
         rewrite  => 1,
     );
 }

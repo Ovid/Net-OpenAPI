@@ -13,12 +13,14 @@ use OpenAPI::Microservices::App::Types qw(
     compile_named
 );
 
+use Perl::Tidy 'perltidy';
 use Text::Unidecode 'unidecode';
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
   get_path_prefix
   resolve_method
+  tidy_code
   trim
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
@@ -105,6 +107,28 @@ sub get_path_prefix {
         croak("Prefix must not be a path variable: $prefix");
     }
     return ucfirst _normalize_string($prefix);
+}
+
+=head2 C<tidy_code($code)>
+
+    my $tidied = tidy_code($code);
+
+Returns code run through L<Perl::Tidy>. See our F<.perltidrc> in this
+distribution.
+
+=cut
+
+sub tidy_code {
+    my $code = shift;
+    my ( $stderr, $tidied );
+
+    perltidy(
+        source      => \$code,
+        destination => \$tidied,
+        stderr      => \$stderr,
+    ) and die "Perl::Tidy error: $stderr";
+
+    return $tidied;
 }
 
 sub _normalize_string {
