@@ -1,4 +1,4 @@
-package OpenAPI::Microservices::Utils::Templates;
+package OpenAPI::Microservices::Utils::Template;
 
 use OpenAPI::Microservices::Policy;
 use Template::Tiny;

@@ -6,7 +6,7 @@ use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Method;
 use OpenAPI::Microservices::Utils::ReWrite;
 use OpenAPI::Microservices::Utils::Core qw(resolve_method tidy_code);
-use OpenAPI::Microservices::Utils::Templates qw(template);
+use OpenAPI::Microservices::Utils::Template qw(template);
 use OpenAPI::Microservices::Utils::File qw(write_file);
 use OpenAPI::Microservices::App::Types qw(
   compile_named
