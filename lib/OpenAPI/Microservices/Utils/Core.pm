@@ -3,6 +3,7 @@ package OpenAPI::Microservices::Utils::Core;
 # ABSTRACT: Utilities for munging OpenAPI::Microservices data
 
 # Be very careful about circular dependencies against this file
+use Template::Tiny;
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::App::Types qw(
     Bool
