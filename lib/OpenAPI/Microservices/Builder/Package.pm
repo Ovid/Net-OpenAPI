@@ -51,7 +51,11 @@ sub routes {
 
     my $code       = '';
     my $controller = $self->name;
-    foreach my $method ( sort { length( $a->path ) <=> length( $b->path ) } @{ $self->get_methods } ) {
+
+    # the sort keeps the auto-generated code deterministic. We put short paths
+    # first just because it's easier to read, but we break ties by sorting on
+    # the guaranteed unique names
+    foreach my $method ( sort { length( $a->path ) <=> length( $b->path ) || $a->name cmp $b->name } @{ $self->get_methods } ) {
         my $http_method = $method->http_method;
         my $path        = $method->path;
         my $name        = $method->name;
@@ -88,7 +92,7 @@ sub write {
     write_file(
         path     => $path,
         file     => $filename,
-        document => tidy_code($self->to_string),
+        document => tidy_code( $self->to_string ),
         rewrite  => 1,
     );
 }
