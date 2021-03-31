@@ -17,6 +17,7 @@ sub test_create_package {
     ok my $method = $package->add_method(
         http_method => 'get',
         path        => '/get/{itemId}',
+        description => 'Get a room, will ya?',
       ),
       'We should be able to add a method to our package';
     explain $method->to_string;

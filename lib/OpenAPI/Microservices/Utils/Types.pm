@@ -10,6 +10,7 @@ use Type::Library
   Directory
   HTTPMethod
   MethodName
+  OpenAPIPath
   PackageName
   );
 
@@ -45,6 +46,9 @@ declare MethodName, as Str,
 
 declare PackageName, as Str,
   where { / ^ $IDENTIFIER (?::: $IDENTIFIER ) * $/x };
+
+declare OpenAPIPath, as Str,
+  where { m< / \w+ (?: / (?: \w+ | \{ \w+ \} ) )* /? >x };
 
 # there are more, but these should be the only ones OpenAPI worries about?
 declare HTTPMethod, as Enum [qw/get put post delete patch/];
@@ -100,9 +104,36 @@ Matches valid method names.
 
 Valid HTTP methods for OpenAPI.
 
--head2 C<Directory>
+=head2 C<Directory>
 
 Valid directory name. Generally must be C<\w+> separated by C</>. A single leading dot is permitted.
+
+=head2 C<OpenAPIPath>
+
+Matches a valid path from OpenAPI.
+
+Rules:
+
+=over 4
+
+=item * That the first path segment must I<not> be a variable
+
+=item * The path must begin with a C</>
+
+=item * A trailing C</> is optional
+
+=back
+
+Examples:
+
+    /get/{petId}       # good
+    /get/{petId}/      # good
+    /get/{petId}/all/  # good
+    /get/{petId}/{all} # good
+    /get/petId         # good
+
+     get/{petId}       # bad
+    /{get}/petId       # bad
 
 =head1 EXTRAS
 

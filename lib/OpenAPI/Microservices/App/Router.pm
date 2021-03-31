@@ -5,6 +5,14 @@ package OpenAPI::Microservices::App::Router;
 use 5.16.0;
 use Moo;
 use OpenAPI::Microservices::Policy;
+use OpenAPI::Microservices::Utils::Types qw(
+    compile
+    Dict
+    HTTPMethod
+    MethodName
+    OpenAPIPath
+    PackageName
+);
 use OpenAPI::Microservices::Utils::Core qw(
   get_path_prefix
 );
@@ -14,7 +22,7 @@ has _routes => (
     default => sub { {} },
 );
 
-=head2 C<add_route(\%route)>
+=head2 C<add_route(\%route, $verbose)>
 
     my $router = OpenAPI::Microservices::App::Router->new;
     $router->add_route(
@@ -26,12 +34,22 @@ has _routes => (
         }
     );
 
-Adds the give route to our router.
+Adds the given route to our router. If passed a second, true value, will
+print the route to STDERR.
 
 =cut
 
 sub add_route {
-    my ( $self, $route ) = @_;
+    my ( $self, $route, $verbose ) = @_;
+    state $check = compile(
+        Dict [
+            path        => OpenAPIPath,
+            http_method => HTTPMethod,
+            controller  => PackageName,
+            action      => MethodName,
+        ]
+    );
+    ($route) = $check->($route);
 
     my $routes = $self->_routes;    # reference, so this mutates
     my $path   = $route->{path};
@@ -43,6 +61,9 @@ sub add_route {
 
     if ( exists $these_routes->{$segments}{$prefix}{$path} ) {
         croak("Route for $http_method $path already added");
+    }
+    if ($verbose) {
+        say STDERR "Added route $http_method $path ($prefix)";
     }
     $these_routes->{$segments}{$prefix}{$path} = $route;
 }

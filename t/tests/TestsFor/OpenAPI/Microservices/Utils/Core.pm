@@ -24,6 +24,7 @@ sub test_resolve_method {
 
             # 시티 is Korean for "city"
             '/시티' => [ 'My::Project::Model::Siti', 'get' ],
+            '/日本/{city}', [ 'My::Project::Model::RiBen', 'with_args_get', [qw/city/] ],
         },
         delete => {
             '/pet/{petId}'           => [ 'My::Project::Model::Pet',   'with_args_delete',       ['petId'] ],

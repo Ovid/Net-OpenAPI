@@ -52,7 +52,7 @@ sub resolve_method {
     $path = unidecode($path);
     $base =~ s/::$//;    # optionally allow My::Project::
     my ( $root, @path ) = grep {/\S/} split m{/} => $path;
-    $root = ucfirst $root;
+    $root = ucfirst _normalize_string($root);
     my @args;
     my $method = $http_method;
     foreach my $element (@path) {
@@ -87,17 +87,21 @@ upper-cases first letter, and returns it.
 sub get_path_prefix {
     my $path = shift;
     my $prefix;
-    if ( $path =~ m{^/(?<prefix>[^/]+)\b.*$} ) {
-        $prefix = unidecode($+{prefix});
-    }
-    else {
+    if ( $path !~ m{^/(?<prefix>[^/]+)\b.*$} ) {
         croak("Cannot determine prefix from path: $path");
     }
+    $prefix = $+{prefix};
     if ( $prefix =~ /^{/ ) {
         croak("Prefix must not be a path variable: $prefix");
     }
-    $prefix =~ s/\W//g;
-    return ucfirst $prefix;
+    return ucfirst _normalize_string($prefix);
+}
+
+sub _normalize_string {
+    my $string = shift;
+    $string = unidecode($string);
+    $string =~ s/\W//g;
+    return $string;
 }
 
 1;
