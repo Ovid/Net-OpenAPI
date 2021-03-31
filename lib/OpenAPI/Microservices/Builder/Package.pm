@@ -6,6 +6,7 @@ use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Builder::Method;
 use OpenAPI::Microservices::Utils::ReWrite;
 use OpenAPI::Microservices::Utils::Core qw(resolve_method);
+use OpenAPI::Microservices::Utils::File qw(write_file);
 use OpenAPI::Microservices::App::Types qw(
   compile_named
   compile
@@ -43,52 +44,53 @@ has methods => (
 
 sub get_methods { return [ values %{ $_[0]->methods } ] }
 
-sub _fields { qw/name get_methods routes/ }
+sub _fields {qw/name get_methods routes/}
 
 sub routes {
-        my $self = shift;
-    
-       my $code = '';
-       my $controller = $self->name;
-        foreach my $method ( @{$self->get_methods} ) {
-            my $http_method = $method->http_method;
-            my $path = $method->path;
-            my $name = $method->name;
-            $code .= "        { path => '$path', http_method => '$http_method', controller => '$controller',  action => '$name' },\n";
-        }
-        chomp($code);
-        $code = <<"END";
+    my $self = shift;
+
+    my $code       = '';
+    my $controller = $self->name;
+    foreach my $method ( @{ $self->get_methods } ) {
+        my $http_method = $method->http_method;
+        my $path        = $method->path;
+        my $name        = $method->name;
+        $code .= "        { path => '$path', http_method => '$http_method', controller => '$controller',  action => '$name' },\n";
+    }
+    chomp($code);
+    $code = <<"END";
 sub routes {
     return (
 $code
     );
 }
 END
-    my $rewrite = OpenAPI::Microservices::Utils::ReWrite->new( new_text => $code );
+    my $rewrite = OpenAPI::Microservices::Utils::ReWrite->new( new_text => $code, identifier => $controller );
     return $rewrite->rewritten;
 }
 
-sub _template {
-    return <<'END';
-package [% name %];
+sub write {
+    my ( $self, $dir ) = @_;
+    my $package_name = $self->name;
 
-use strict;
-use warnings;
-use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
+    my ( $base, $filename );
+    if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
+        $base     = $+{path};
+        $filename = $+{file};
+        $base =~ s{::}{/}g;
+    }
+    else {
+        croak("Bad package name: $package_name");
+    }
 
-[% routes %]
-
-=head1 NAME
-
-[% name %]
-
-=head1 METHODS
-[% FOREACH method IN get_methods %]
-[% method.to_string %]
-[% END %]
-
-1;
-END
+    $filename .= ".pm";
+    my $path = "$dir/lib/$base";
+    write_file(
+        path     => $path,
+        file     => $filename,
+        document => $self->to_string,
+        rewrite  => 1,
+    );
 }
 
 sub has_method {
@@ -113,7 +115,7 @@ sub add_method {
         $arg_for->{path},
     );
 
-    if ( $self->has_method( $method_name ) ) {
+    if ( $self->has_method($method_name) ) {
         croak("Cannot re-add method '$arg_for->{method}'");
     }
     my $method = OpenAPI::Microservices::Builder::Method->new(
@@ -128,4 +130,26 @@ sub add_method {
     return $method;
 }
 
+sub _template {
+    return <<'END';
+package [% name %];
+
+use strict;
+use warnings;
+use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
+
+[% routes %]
+
+=head1 NAME
+
+[% name %]
+
+=head1 METHODS
+[% FOREACH method IN get_methods %]
+[% method.to_string %]
+[% END %]
+
+1;
+END
+}
 1;

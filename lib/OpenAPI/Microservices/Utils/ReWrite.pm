@@ -29,6 +29,12 @@ has new_text => (
     required => 1,
 );
 
+has identifier => (
+    is       => 'ro',
+    isa      => NonEmptyStr,
+    required => 1,
+);
+
 has overwrite => (
     is      => 'ro',
     isa     => Bool,
@@ -73,18 +79,19 @@ sub _extract_before_and_after {
     $text //= $self->old_text;
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
+    my $identifier = $self->identifier;
     if ( $text !~ $extract_re ) {
-        croak("Could not find start and end markers in text.");
+        croak("Could not find start and end markers in text for $identifier");
     }
     my $digest_start = $+{digest_start};
     my $digest_end   = $+{digest_end};
 
     unless ( $digest_start eq $digest_end ) {
-        croak("Start digest ($digest_start) does not match end digest ($digest_end)");
+        croak("Start digest ($digest_start) does not match end digest ($digest_end) for $identifier");
     }
 
     if ( !$self->overwrite && $digest_start ne $self->_get_checksum( $+{body} ) ) {
-        croak("Checksum ($digest_start) did not match text. Set 'overwrite' to true to ignore this.");
+        croak("Checksum ($digest_start) did not match text. Set 'overwrite' to true to ignore this for $identifier");
     }
     my $before = $+{before} // '';
     my $after  = $+{after}  // '';
@@ -96,14 +103,15 @@ sub _extract_body {
     $text //= $self->new_text;
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
+    my $identifier = $self->identifier;
     if ( $text !~ $extract_re ) {
-        croak("Could not find start and end markers in text.");
+        croak("Could not find start and end markers in text for $identifier");
     }
     my $digest_start = $+{digest_start};
     my $digest_end   = $+{digest_end};
 
     unless ( $digest_start eq $digest_end ) {
-        croak("Start digest ($digest_start) does not match end digest ($digest_end)");
+        croak("Start digest ($digest_start) does not match end digest ($digest_end) for $identifier");
     }
 
     return trim( $+{body} );

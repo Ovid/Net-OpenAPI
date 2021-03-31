@@ -14,7 +14,7 @@ It does me no injury for my neighbour to say there are 20 gods or no God. It nei
 — Thomas Jefferson
 END
 
-    ok my $rewrite = $test->class_name->new( new_text => $sample ), 'We should be able to create a rewrite object without old text';
+    ok my $rewrite = $test->class_name->new( new_text => $sample, identifier => 'test' ), 'We should be able to create a rewrite object without old text';
 
     my $expected = <<'END';
 #<<<: do not touch any code between this and the end comment. Checksum: da4a8adfd9ad75321c955e0d226532a6
@@ -41,8 +41,9 @@ citoyen.
 END
 
     ok $rewrite = $test->class_name->new(
-        old_text => $rewritten,
-        new_text => $new_text,
+        old_text   => $rewritten,
+        new_text   => $new_text,
+        identifier => 'test',
       ),
       'We should be able to rewrite the old text with new text, but leaving "outside" areas unchanged';
 
@@ -63,8 +64,9 @@ END
     $test->is_multiline_text( $rewritten, $expected, '... and get our new text as expected' );
 
     ok $rewrite = $test->class_name->new(
-        old_text => $rewritten,
-        new_text => $full_document_with_before_and_after_text,
+        old_text   => $rewritten,
+        new_text   => $full_document_with_before_and_after_text,
+        identifier => 'test',
       ),
       'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
     $rewritten = $rewrite->rewritten;

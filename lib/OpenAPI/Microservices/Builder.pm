@@ -89,29 +89,10 @@ sub write {
                 path        => $path,
                 description => $description,
             );
-            $self->_write_package($package);
+            $package->write($self->dir);
         }
     );
     $self->_write_driver;
-}
-
-sub _write_package {
-    my ( $self, $package ) = @_;
-    my $package_name = $package->name;
-
-    my ( $base, $filename );
-    if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
-        $base     = $+{path};
-        $filename = $+{file};
-        $base =~ s{::}{/}g;
-    }
-    else {
-        croak("Bad package name: $package_name");
-    }
-
-    $filename .= ".pm";
-    my $path = path( $self->dir . "/lib/$base" )->make_path;
-    $path->make_path->child($filename)->spurt( $package->to_string );
 }
 
 sub _write_driver {
