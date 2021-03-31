@@ -6,12 +6,12 @@ use 5.16.0;
 use Moo;
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::App::Types qw(
-    compile
-    Dict
-    HTTPMethod
-    MethodName
-    OpenAPIPath
-    PackageName
+  compile
+  Dict
+  HTTPMethod
+  MethodName
+  OpenAPIPath
+  PackageName
 );
 use OpenAPI::Microservices::Utils::Core qw(
   get_path_prefix
@@ -27,10 +27,10 @@ has _routes => (
     my $router = OpenAPI::Microservices::App::Router->new;
     $router->add_route(
         {
-            path        => $path,
             http_method => $http_method,
-            controller  => $controller_class,
-            action      => $action,
+            path        => $path,
+            dispatch_to => $class_name,
+            method      => $method,
         }
     );
 
@@ -45,8 +45,8 @@ sub add_route {
         Dict [
             path        => OpenAPIPath,
             http_method => HTTPMethod,
-            controller  => PackageName,
-            action      => MethodName,
+            dispatch_to => PackageName,
+            method      => MethodName,
         ]
     );
     ($route) = $check->($route);

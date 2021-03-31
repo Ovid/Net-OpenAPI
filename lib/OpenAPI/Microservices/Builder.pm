@@ -57,6 +57,11 @@ has packages => (
     default => sub { {} },
 );
 
+sub _get_packages {
+    my $self = shift;
+    return values %{$self->packages};
+}
+
 sub write {
     my $self   = shift;
     my $schema = $self->_validator->schema;
@@ -89,9 +94,9 @@ sub write {
                 path        => $path,
                 description => $description,
             );
-            $package->write($self->dir);
         }
     );
+    $_->write($self->dir) foreach $self->_get_packages;
     $self->_write_driver;
 }
 
@@ -127,20 +132,20 @@ END
 sub {
     my $req   = Plack::Request->new(shift);
     my $match = $router->match($req)
-        or return $req->new_response(404)->finalize;
+      or return $req->new_response(404)->finalize;
 
-    my $controller = $match->{controller};
-    my $action = $controller->can($match->{action})
-        or return $req->new_response(405)->finalize;
+    my $handling_class = $match->{dispatch_to};
+    my $method         = $handling_class->can( $match->{method} )
+      or return $req->new_response(405)->finalize;
     my $res;
-    if ( eval { $res = $controller->$action($req, $match); 1 } ) {
+    if ( eval { $res = $handling_class->$method( $req, $match ); 1 } ) {
         $res->finalize;
     }
     else {
         my $error = $@;
         my $res;
         if ( blessed $error ) {
-            $res = $req->new_response($error->status_code);
+            $res = $req->new_response( $error->status_code );
             if ( my $info = $error->info ) {
                 $res->content_type('text/plain');
                 $res->body($info);

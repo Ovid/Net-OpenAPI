@@ -1,7 +1,7 @@
 package OpenAPI::Microservices::Utils::Template;
 
 use OpenAPI::Microservices::Policy;
-use Template::Tiny;
+use OpenAPI::Microservices::Utils::Template::Tiny;
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
@@ -9,9 +9,9 @@ our @EXPORT_OK = qw(
 );
 
 sub template {
-    my ( $path_to_template, $arg_for ) = @_;
-    my $template = Template::Tiny->new;
-    my $input    = _get_template($path_to_template);
+    my ( $template_name, $arg_for ) = @_;
+    my $template = OpenAPI::Microservices::Utils::Template::Tiny->new( name => $template_name );
+    my $input    = _get_template($template_name);
 
     # Generate template results into a variable
     my $output = '';
@@ -21,8 +21,17 @@ sub template {
 
 sub _get_template {
     my $requested = shift;
-    state $template = {
-        'controller' => 'package [% package %];
+    my %template = (
+        controller => \&_controller_template,
+        model      => \&_model_template,
+    );
+    my $code = $template{$requested} or croak("No such template for '$requested'");
+    return $code->();
+}
+
+sub _controller_template {
+    return <<'END';
+package [% package %];
 
 use strict;
 use warnings;
@@ -55,9 +64,28 @@ The model handling this controller is L<[% model %]>.
 Requests handled by controller method L<[% method.name %]>
 [% END %]
 }
-',
-    };
-    return $template->{$requested};
+END
+}
+
+sub _model_template {
+    return <<'END';
+package [% name %];
+
+use strict;
+use warnings;
+use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
+
+=head1 NAME
+
+[% name %]
+
+=head1 METHODS
+[% FOREACH method IN get_methods %]
+[% method.to_string %]
+[% END %]
+
+1;
+END
 }
 
 1;
