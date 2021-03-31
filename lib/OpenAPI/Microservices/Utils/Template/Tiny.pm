@@ -20,7 +20,7 @@ my $LEFT = qr/
 /xs;
 
 # Closing %] tag including whitespace chomping rules
-my $RIGHT  = qr/
+my $RIGHT = qr/
 	\s* (?:
 		\+? \%\]
 		|
@@ -72,50 +72,64 @@ sub new {
     my ( $class, %arg_for ) = @_;
     bless {
         TRIM   => $arg_for{TRIM},
+        name   => ( $arg_for{name} // '<unknown>' ),
         errors => {},
-        name   => $arg_for{name},
+        used   => {},
     } => $class;
 }
 
 # Copy and modify
 sub preprocess {
-	my $self = shift;
-	my $text = shift;
-	$self->_preprocess(\$text);
-	return $text;
+    my $self = shift;
+    my $text = shift;
+    $self->_preprocess( \$text );
+    return $text;
 }
 
 sub process {
-	my $self  = shift;
-	my $copy  = ${shift()};
-	my $stash = shift || {};
+    my $self  = shift;
+    my $copy  = ${ shift() };
+    my $stash = shift || {};
+    $self->{errors} = {};
+    $self->{used}   = {};
 
-	local $@  = '';
-	local $^W = 0;
+    local $@  = '';
+    local $^W = 0;
 
-	# Preprocess to establish unique matching tag sets
-	$self->_preprocess( \$copy );
+    # Preprocess to establish unique matching tag sets
+    $self->_preprocess( \$copy );
 
-	# Process down the nested tree of conditions
-	my $result = $self->_process( $stash, $copy );
+    # Process down the nested tree of conditions
+    my $result = $self->_process( $stash, $copy );
     if ( my %errors = %{ $self->{errors} } ) {
         my $errors = join "\n" => sort keys %errors;
         croak($errors);
     }
-	if ( @_ ) {
-		${$_[0]} = $result;
-	} elsif ( defined wantarray ) {
-		require Carp;
-		Carp::carp('Returning of template results is deprecated in Template::Tiny 0.11');
-		return $result;
-	} else {
-		print $result;
-	}
+
+    my @unused;
+    foreach my $var ( keys %$stash ) {
+        unless ( $self->{used}{$var} ) {
+            push @unused => $var;
+        }
+    }
+    if (@unused) {
+        my $unused = join ', ' => @unused;
+        my $name   = $self->{name};
+        croak("The following variables were passed to the '$name' template but not used: $unused");
+    }
+
+    if (@_) {
+        ${ $_[0] } = $result;
+    }
+    elsif ( defined wantarray ) {
+        require Carp;
+        Carp::carp('Returning of template results is deprecated in Template::Tiny 0.11');
+        return $result;
+    }
+    else {
+        print $result;
+    }
 }
-
-
-
-
 
 ######################################################################
 # Support Methods
@@ -123,12 +137,12 @@ sub process {
 # The only reason this is a standalone is so we can
 # do more in-depth testing.
 sub _preprocess {
-	my $self = shift;
-	my $copy = shift;
+    my $self = shift;
+    my $copy = shift;
 
-	# Preprocess to establish unique matching tag sets
-	my $id = 0;
-	1 while $$copy =~ s/
+    # Preprocess to establish unique matching tag sets
+    my $id = 0;
+    1 while $$copy =~ s/
 		$PREPARSE
 	/
 		my $tag = substr($1, 0, 1) . ++$id;
@@ -138,9 +152,9 @@ sub _preprocess {
 }
 
 sub _process {
-	my ($self, $stash, $text) = @_;
+    my ( $self, $stash, $text ) = @_;
 
-	$text =~ s/
+    $text =~ s/
 		$CONDITION
 	/
 		($2 eq 'F')
@@ -155,8 +169,8 @@ sub _process {
 				: $self->_process($stash, $6)
 	/gsex;
 
-	# Resolve expressions
-	$text =~ s/
+    # Resolve expressions
+    $text =~ s/
 		$LEFT ( $EXPR ) $RIGHT
 	/
 		eval {
@@ -165,57 +179,60 @@ sub _process {
 		}
 	/gsex;
 
-	# Trim the document
-	$text =~ s/^\s*(.+?)\s*\z/$1/s if $self->{TRIM};
+    # Trim the document
+    $text =~ s/^\s*(.+?)\s*\z/$1/s if $self->{TRIM};
 
-	return $text;
+    return $text;
 }
 
 # Special handling for foreach
 sub _foreach {
-	my ($self, $stash, $term, $expr, $text) = @_;
+    my ( $self, $stash, $term, $expr, $text ) = @_;
 
-	# Resolve the expression
-	my $list = $self->_expression($stash, $expr);
-	unless ( ref $list eq 'ARRAY' ) {
-		return '';
-	}
+    # Resolve the expression
+    my $list = $self->_expression( $stash, $expr );
+    unless ( ref $list eq 'ARRAY' ) {
+        return '';
+    }
 
-	# Iterate
-	return join '', map {
-		$self->_process( { %$stash, $term => $_ }, $text )
-	} @$list;
+    # Iterate
+    return join '', map { $self->_process( { %$stash, $term => $_ }, $text ) } @$list;
 }
 
 # Evaluates a stash expression
 sub _expression {
-	my $cursor = $_[1];
-	my @path   = split /\./, $_[2];
-	foreach ( @path ) {
-		# Support for private keys
-		return undef if substr($_, 0, 1) eq '_';
+    my $cursor = $_[1];
+    my @path   = split /\./, $_[2];
+    $_[0]->{used}{ $path[0] } = 1;
+    foreach (@path) {
 
-		# Split by data type
-		my $type = ref $cursor;
-		if ( $type eq 'ARRAY' ) {
-			return '' unless /^(?:0|[0-9]\d*)\z/;
-			$cursor = $cursor->[$_];
-		} elsif ( $type eq 'HASH' ) {
-			$cursor = $cursor->{$_};
-		} elsif ( $type ) {
-			$cursor = $cursor->$_();
-		} else {
-			return '';
-		}
-	}
+        # Support for private keys
+        return undef if substr( $_, 0, 1 ) eq '_';
 
-    unless (defined $cursor) {
-       my $name = $_[0]->{name} // '<unknown>';
-       $_[0]->{errors}{"Undefined value in template path '@path' in '$name' template."} = 1;
-       return '';
+        # Split by data type
+        my $type = ref $cursor;
+        if ( $type eq 'ARRAY' ) {
+            return '' unless /^(?:0|[0-9]\d*)\z/;
+            $cursor = $cursor->[$_];
+        }
+        elsif ( $type eq 'HASH' ) {
+            $cursor = $cursor->{$_};
+        }
+        elsif ($type) {
+            $cursor = $cursor->$_();
+        }
+        else {
+            return '';
+        }
     }
 
-	return $cursor;
+    unless ( defined $cursor ) {
+        my $name = $_[0]->{name};
+        $_[0]->{errors}{"Undefined value in template path '@path' in '$name' template."} = 1;
+        return '';
+    }
+
+    return $cursor;
 }
 
 1;
@@ -246,6 +263,9 @@ This code behaves like L<Template::Tiny>, but if any variables passed to a
 template are undefined, the code will C<croak()> with an error after the
 template has finished processing. The C<name> passed to the constructor will
 be used in error messages.
+
+The code will also C<croak> if any variables are passed to C<process> but not
+used in the template.
 
 B<Template::Tiny> is a reimplementation of a subset of the functionality from
 L<Template> Toolkit in as few lines of code as possible.
