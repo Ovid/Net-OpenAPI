@@ -7,18 +7,18 @@ sub test_routing {
     my $test   = shift;
     my $router = $test->class_name->new;
     my @routes = (
-        { path => '/pet',              http_method => 'post',   controller => 'My::Project::OpenAPI::Model::Pet', action => 'post' },
-        { path => '/pet',              http_method => 'put',    controller => 'My::Project::OpenAPI::Model::Pet', action => 'put' },
-        { path => '/pet/findByStatus', http_method => 'get',    controller => 'My::Project::OpenAPI::Model::Pet', action => 'get_findByStatus' },
-        { path => '/pet/findByTags',   http_method => 'get',    controller => 'My::Project::OpenAPI::Model::Pet', action => 'get_findByTags' },
-        { path => '/pet/{petId}',      http_method => 'delete', controller => 'My::Project::OpenAPI::Model::Pet', action => 'with_args_delete' },
-        { path => '/pet/{petId}',      http_method => 'get',    controller => 'My::Project::OpenAPI::Model::Pet', action => 'with_args_get' },
-        { path => '/pet/{petId}',      http_method => 'post',   controller => 'My::Project::OpenAPI::Model::Pet', action => 'with_args_post' },
+        { path => '/pet',              http_method => 'post',   dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'post' },
+        { path => '/pet',              http_method => 'put',    dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'put' },
+        { path => '/pet/findByStatus', http_method => 'get',    dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'get_findByStatus' },
+        { path => '/pet/findByTags',   http_method => 'get',    dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'get_findByTags' },
+        { path => '/pet/{petId}',      http_method => 'delete', dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'with_args_delete' },
+        { path => '/pet/{petId}',      http_method => 'get',    dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'with_args_get' },
+        { path => '/pet/{petId}',      http_method => 'post',   dispatch_to => 'My::Project::OpenAPI::Model::Pet', method => 'with_args_post' },
         {
-            path   => '/pet/{petId}/uploadImage', http_method => 'post', controller => 'My::Project::OpenAPI::Model::Pet',
-            action => 'with_args_post___uploadImage'
+            path   => '/pet/{petId}/uploadImage', http_method => 'post', dispatch_to => 'My::Project::OpenAPI::Model::Pet',
+            method => 'with_args_post___uploadImage'
         },
-        { path => '/日本/{city}', http_method => 'get', controller => 'My::Project::OpenAPI::Model::RiBen', action => 'with_args_get' },
+        { path => '/日本/{city}', http_method => 'get', dispatch_to => 'My::Project::OpenAPI::Model::RiBen', method => 'with_args_get' },
     );
     foreach my $route (@routes) {
         my ( $method, $path ) = @{$route}{qw/http_method path/};

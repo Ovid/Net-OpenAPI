@@ -20,7 +20,13 @@ sub test_create_package {
         description => 'Get a room, will ya?',
       ),
       'We should be able to add a method to our package';
-    explain $method->to_string;
+    ok $method = $package->add_method(
+        http_method => 'post',
+        path        => '/create',
+        description => 'Make it so!',
+      ),
+      'We should be able to add a method to our package';
+    explain $package->_get_model_code('target');
 }
 
 1;

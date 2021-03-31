@@ -80,6 +80,29 @@ sub write {
 sub _write_controller {
     my ( $self, $dir ) = @_;
 
+    my ( $code, $path, $filename ) = $self->_get_controller_code($dir);
+    write_file(
+        path     => $path,
+        file     => $filename,
+        document => tidy_code($code),
+        rewrite  => 1,
+    );
+}
+
+sub _write_model {
+    my ( $self, $dir ) = @_;
+
+    my ( $code, $path, $filename ) = $self->_get_model_code($dir);
+    write_file(
+        path     => $path,
+        file     => $filename,
+        document => tidy_code($code),
+    );
+}
+
+sub _get_controller_code {
+    my ( $self, $dir ) = @_;
+
     my $code       = '';
     my $model      = $self->name;
     my $controller = $model;
@@ -96,13 +119,14 @@ sub _write_controller {
         $code .= "        { path => '$path', http_method => '$http_method', dispatch_to => '$model',  method => '$name' },\n";
     }
     chomp($code);
-    $code = tidy_code(<<"END");
+    $code = <<"END";
 sub routes {
     return (
 $code
     );
 }
 END
+    $code = tidy_code($code);
     my $rewrite = OpenAPI::Microservices::Utils::ReWrite->new( new_text => $code, identifier => $controller );
     my ( $path, $filename ) = $self->_get_path_and_file( $dir, $controller );
     my $controller_code = template(
@@ -114,17 +138,11 @@ END
             model           => $model,
         }
     );
-    write_file(
-        path     => $path,
-        file     => $filename,
-        document => tidy_code($controller_code),
-        rewrite  => 1,
-    );
+    return ( $controller_code, $path, $filename );
 }
 
-sub _write_model {
+sub _get_model_code {
     my ( $self, $dir ) = @_;
-
     my ( $path, $filename ) = $self->_get_path_and_file( $dir, $self->name );
 
     my $code = <<'END';
@@ -138,15 +156,13 @@ END
         {
             name        => $self->name,
             get_methods => $self->get_methods,
+            reserved    => $rewrite->rewritten,
         }
     );
-    write_file(
-        path      => $path,
-        file      => $filename,
-        document  => tidy_code($model_code),
-        overwrite => 0,
-    );
+
+    return ( $model_code, $path, $filename );
 }
+
 sub _get_path_and_file {
     my ( $self, $dir, $package_name ) = @_;
 

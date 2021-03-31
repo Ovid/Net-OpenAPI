@@ -24,6 +24,7 @@ sub _get_template {
     my %template = (
         controller => \&_controller_template,
         model      => \&_model_template,
+        method     => \&_method_template,
     );
     my $code = $template{$requested} or croak("No such template for '$requested'");
     return $code->();
@@ -75,6 +76,8 @@ use strict;
 use warnings;
 use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
 
+[% reserved %]
+
 =head1 NAME
 
 [% name %]
@@ -85,6 +88,24 @@ use OpenAPI::Microservices::Exceptions::HTTP::NotImplemented;
 [% END %]
 
 1;
+END
+}
+
+sub _method_template {
+    return <<'END';
+=head2 C<[% name %]>
+
+Route: [% http_method %] [% path %]
+
+[% description %]
+
+=cut
+
+sub [% name %] {
+    my $self = shift;
+    my ($request, $params) = @_;
+    OpenAPI::Microservices::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
+}
 END
 }
 

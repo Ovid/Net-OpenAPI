@@ -1,15 +1,13 @@
 package OpenAPI::Microservices::Builder::Method;
 
 use Moo;
+use OpenAPI::Microservices::Utils::Template qw(template);
 use OpenAPI::Microservices::App::Types qw(
   ArrayRef
   HTTPMethod
   InstanceOf
   MethodName
   NonEmptyStr
-);
-with qw(
-  OpenAPI::Microservices::Builder::Role::ToString
 );
 
 has package => (
@@ -49,25 +47,12 @@ has arguments => (
     required => 1,
 );
 
-sub _fields { qw/name path http_method arguments description/ }
-
-sub _template {
+sub to_string {
     my $self = shift;
-    return <<'END';
-=head2 C<[% name %]>
-
-Route: [% http_method %] [% path %]
-
-[% description %]
-
-=cut
-
-sub [% name %] {
-    my $self = shift;
-    my ($request, $params) = @_;
-    OpenAPI::Microservices::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
-}
-END
+    return template(
+        'method',
+        { map { $_ => $self->$_ } qw/name path http_method description/ }
+    );
 }
 
 1;
