@@ -78,16 +78,23 @@ sub write {
             my ( $route, $num ) = @_;
             my $http_method = $route->{method};
             my $path        = $route->{path};
+            my $root        = resolve_root($path);
+            my $package     = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
+
             my $description
               = $schema->get(  [ "paths", $path, $http_method, "description" ] )
               || $schema->get( [ "paths", $path, $http_method, "summary" ] )
               || 'No description found';
-            my $root    = resolve_root($path);
-            my $package = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
+            my $request_parameters  = $schema->parameters_for_request(  [ $http_method, $path ] );
+            my $response_parameters = $schema->parameters_for_response( [ $http_method, $path ] );
             $package->add_method(
                 http_method => $http_method,
                 path        => $path,
                 description => $description,
+                parameters  => {
+                    request  => $request_parameters,
+                    response => $response_parameters,
+                },
             );
         }
     );

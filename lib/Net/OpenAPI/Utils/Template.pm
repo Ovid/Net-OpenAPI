@@ -98,6 +98,14 @@ sub _method_template {
 
 [% description %]
 
+=head2 Request Parameters
+
+[% request_params %]
+
+=head2 Response Parameters
+
+[% response_params %]
+
 =cut
 
 endpoint '[% http_method %] [% path %]' => sub {

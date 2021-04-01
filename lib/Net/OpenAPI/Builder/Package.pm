@@ -9,15 +9,17 @@ use Net::OpenAPI::Utils::Core qw(resolve_method resolve_package tidy_code);
 use Net::OpenAPI::Utils::Template qw(template);
 use Net::OpenAPI::Utils::File qw(write_file);
 use Net::OpenAPI::App::Types qw(
-  compile_named
-  compile
-  MethodName
   ArrayRef
-  NonEmptyStr
+  Dict
   HTTPMethod
-  InstanceOf
   HashRef
+  InstanceOf
+  MethodName
+  NonEmptyStr
   PackageName
+  Undef
+  compile
+  compile_named
 );
 
 has controller_name => (
@@ -65,6 +67,10 @@ sub add_method {
         http_method => HTTPMethod,
         path        => NonEmptyStr,
         description => NonEmptyStr,
+        parameters  => Dict[
+            request => Undef | ArrayRef[HashRef],
+            response => Undef | ArrayRef[HashRef],
+        ],
     );
     my $arg_for = $check->(@_);
 
@@ -84,7 +90,7 @@ sub add_method {
         path        => $arg_for->{path},
         http_method => $arg_for->{http_method},
         description => $arg_for->{description},
-        arguments   => ( $args || [] )
+        parameters  => $arg_for->{parameters},
     );
     $self->methods->{$method_name} = $method;
     return $method;

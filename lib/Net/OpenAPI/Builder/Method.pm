@@ -1,13 +1,18 @@
 package Net::OpenAPI::Builder::Method;
 
 use Moo;
+use Data::Dumper;
 use Net::OpenAPI::Utils::Template qw(template);
+use Net::OpenAPI::Utils::Core qw(tidy_code);
 use Net::OpenAPI::App::Types qw(
   ArrayRef
+  Dict
   HTTPMethod
+  HashRef
   InstanceOf
   MethodName
   NonEmptyStr
+  Undef
 );
 
 has package => (
@@ -41,17 +46,40 @@ has description => (
     required => 1,
 );
 
-has arguments => (
-    is       => 'ro',
-    isa      => ArrayRef [NonEmptyStr],
+has parameters => (
+    is  => 'ro',
+    isa => Dict [
+        request  => Undef | ArrayRef [HashRef],
+        response => Undef | ArrayRef [HashRef],
+    ],
     required => 1,
 );
+
+sub _format_params {
+    my ( $self, $params ) = @_;
+    local $Data::Dumper::Indent   = 1;
+    local $Data::Dumper::Sortkeys = 1;
+    local $Data::Dumper::Terse    = 1;
+    return tidy_code( Dumper($params) );
+}
+
+sub request_params {
+    my $self   = shift;
+    my $params = $self->parameters->{request} or return 'None';
+    return $self->_format_params($params);
+}
+
+sub response_params {
+    my $self   = shift;
+    my $params = $self->parameters->{response} or return 'None';
+    return $self->_format_params($params);
+}
 
 sub to_string {
     my $self = shift;
     return template(
         'method',
-        { map { $_ => $self->$_ } qw/path http_method description/ }
+        { map { $_ => $self->$_ } qw/request_params response_params path http_method description/ }
     );
 }
 
