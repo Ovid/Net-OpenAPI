@@ -5,7 +5,7 @@ use Moo;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Method;
 use Net::OpenAPI::Utils::ReWrite;
-use Net::OpenAPI::Utils::Core qw(resolve_method tidy_code);
+use Net::OpenAPI::Utils::Core qw(resolve_method resolve_package tidy_code);
 use Net::OpenAPI::Utils::Template qw(template);
 use Net::OpenAPI::Utils::File qw(write_file);
 use Net::OpenAPI::App::Types qw(
@@ -20,13 +20,31 @@ use Net::OpenAPI::App::Types qw(
   PackageName
 );
 
-has name => (
+has controller_name => (
+    is       => 'lazy',
+    isa      => PackageName,
+    builder => sub {
+        my $self = shift;
+        return join '::' => $self->base, 'Controller', $self->root;
+    },
+);
+
+has model_name => (
+    is       => 'lazy',
+    isa      => PackageName,
+    builder => sub {
+        my $self = shift;
+        return join '::' => $self->base, 'Model', $self->root;
+    },
+);
+
+has base => (
     is       => 'ro',
     isa      => PackageName,
     required => 1,
 );
 
-has base => (
+has root => (
     is       => 'ro',
     isa      => PackageName,
     required => 1,
@@ -50,14 +68,15 @@ sub add_method {
     );
     my $arg_for = $check->(@_);
 
-    my ( undef, $method_name, $args ) = resolve_method(
-        $self->base,
+    my ( $method_name, $args ) = resolve_method(
         $arg_for->{http_method},
         $arg_for->{path},
     );
 
     if ( $self->_has_method($method_name) ) {
-        croak("Cannot re-add action '$arg_for->{action}'");
+        my $base = $self->base;
+        my $root = $self->root;
+        croak("Cannot re-add action '$arg_for->{http_method} $arg_for->{path}' to ($base $root)");
     }
     my $method = Net::OpenAPI::Builder::Method->new(
         package     => $self,
@@ -104,11 +123,8 @@ sub _get_controller_code {
     my ( $self, $dir ) = @_;
 
     my $code       = '';
-    my $model      = $self->name;
-    my $controller = $model;
-
-    # XXX This wasn't planned well. Please revisit this.
-    $controller =~ s/::Model::/::Controller::/;
+    my $model      = $self->model_name;
+    my $controller = $self->controller_name;
 
     # the sort keeps the auto-generated code deterministic. We put short paths
     # first just because it's easier to read, but we break ties by sorting on
@@ -145,18 +161,19 @@ END
 
 sub _get_model_code {
     my ( $self, $dir ) = @_;
-    my ( $path, $filename ) = $self->_get_path_and_file( $dir, $self->name );
+    my $model_name = $self->model_name;
+    my ( $path, $filename ) = $self->_get_path_and_file( $dir, $model_name );
 
     my $code = <<'END';
 # This space is reserved for future code.
 END
 
-    my $rewrite = Net::OpenAPI::Utils::ReWrite->new( new_text => $code, identifier => $self->name );
+    my $rewrite = Net::OpenAPI::Utils::ReWrite->new( new_text => $code, identifier => $model_name );
 
     my $model_code = template(
         'model',
         {
-            name        => $self->name,
+            name        => $model_name,
             get_methods => $self->get_methods,
             reserved    => $rewrite->rewritten,
         }

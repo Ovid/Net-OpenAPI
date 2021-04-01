@@ -21,6 +21,8 @@ use base 'Exporter';
 our @EXPORT_OK = qw(
   get_path_prefix
   resolve_method
+  resolve_package
+  resolve_root
   tidy_code
   trim
 );
@@ -50,22 +52,50 @@ sub trim {
     return $text;
 }
 
+=head2 C<resolve_package>
+
+    my $package = resolve_package(
+        'My::OpenAPI::Project',  # project base name
+        'Model',                 # Model or Controller
+        '/pet/{petId}'           # OpenAPI path
+    );
+
+=cut
+
+sub resolve_package {
+    my ( $base, $type, $path ) = @_;
+    $base =~ s/::$//;    # optionally allow My::Project::
+    my $root = resolve_root($path);
+    return "${base}::${type}::$root";
+}
+
+=head2 C<resolve_root>
+
+    my $root = resolve_root($OpenAPIPath);
+
+Returns the first segment name, unidecoded, with an uppercase first letter and
+all non-word characters removed. Frequently used to create package names.
+
+=cut
+
+sub resolve_root {
+    my $path = shift;
+    my ( $root, undef ) = grep {/\S/} split m{/} => $path;
+    return ucfirst _normalize_string($root);
+}
+
 =head2 C<resolve_method($package_base, $http_method, $path)>
 
-    my ( $package, $method, $args ) = resolve_method(
-        'My::Project::Model',
-        'get',
+    my ( $method, $args ) = resolve_method(
+        'get',  # or GET (http method)
         '/store/order/{orderId}'
     );
 
 =cut
 
 sub resolve_method {
-    my ( $base, $http_method, $path ) = @_;
-    $path = unidecode($path);
-    $base =~ s/::$//;    # optionally allow My::Project::
-    my ( $root, @path ) = grep {/\S/} split m{/} => $path;
-    $root = ucfirst _normalize_string($root);
+    my ( $http_method, $path ) = @_;
+    my ( undef, @path ) = grep {/\S/} split m{/} => $path;
     my @args;
     my $method = lc $http_method;
     foreach my $element (@path) {
@@ -85,7 +115,7 @@ sub resolve_method {
     }
     $method =~ s/_+$//;
     $method =~ s/-/_/g;
-    return ( "${base}::$root", $method, \@args );
+    return ( $method, \@args );
 }
 
 =head2 C<prefix>

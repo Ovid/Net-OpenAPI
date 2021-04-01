@@ -6,7 +6,7 @@ use Net::OpenAPI::Builder;
 
 my $builder = Net::OpenAPI::Builder->new(
     schema => 'data/v3-petstore.json',
-    base   => 'My::Project::OpenAPI::Model',
+    base   => 'My::Project::OpenAPI',
     dir    => 'target',
 );
 $builder->write;

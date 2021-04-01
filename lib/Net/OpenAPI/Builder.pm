@@ -4,7 +4,7 @@ package Net::OpenAPI::Builder;
 
 use Moo;
 use Mojo::File qw(path);
-use Mojo::JSON 'decode_json';
+use Mojo::JSON qw(decode_json encode_json);
 use JSON::Validator::Schema::OpenAPIv3;
 
 use Net::OpenAPI::Policy;
@@ -12,6 +12,7 @@ use Net::OpenAPI::Builder::Package;
 
 use Net::OpenAPI::Utils::Core qw(
   resolve_method
+  resolve_root
 );
 use Net::OpenAPI::App::Types qw(
   Directory
@@ -59,7 +60,7 @@ has packages => (
 
 sub _get_packages {
     my $self = shift;
-    return values %{$self->packages};
+    return values %{ $self->packages };
 }
 
 sub write {
@@ -73,22 +74,22 @@ sub write {
 
     my $routes = $schema->routes;
     my $base   = $self->base;
+    my @methods;
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
-            my $http_method  = $route->{method};
-            my $operation_id = $route->{operation_id};
-            my $path         = $route->{path};
+            my $http_method = $route->{method};
+            my $path        = $route->{path};
             my $description
               = $schema->get(  [ "paths", $path, $http_method, "description" ] )
               || $schema->get( [ "paths", $path, $http_method, "summary" ] )
               || 'No description found';
-            my ( $package_name, $method_name, $args ) = resolve_method(
-                $base,
+            my ( $method_name, $args ) = resolve_method(
                 $http_method,
                 $path,
             );
-            my $package = $self->packages->{$package_name} //= Net::OpenAPI::Builder::Package->new( name => $package_name, base => $base );
+            my $root    = resolve_root($path);
+            my $package = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
             $package->add_method(
                 http_method => $http_method,
                 path        => $path,
@@ -96,7 +97,7 @@ sub write {
             );
         }
     );
-    $_->write($self->dir) foreach $self->_get_packages;
+    $_->write( $self->dir ) foreach $self->_get_packages;
     $self->_write_driver;
 }
 
@@ -109,6 +110,7 @@ sub _write_driver {
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
+use Mojo::JSON qw(encode_json);
 use lib '../lib'; # XXX fix me (load Net::OpenAPI::*)
 
 use Plack::Request;
@@ -117,7 +119,7 @@ use Net::OpenAPI::App::Router;
 END
 
     my $routes   = '';
-    my @packages = map { $_->name } values %{ $self->packages };
+    my @packages = map { $_->controller_name } values %{ $self->packages };
     foreach my $package (@packages) {
         $code   .= "use $package;\n";
         $routes .= "\$router->add_route(\$_) foreach $package->routes;\n";
@@ -142,11 +144,19 @@ sub {
     else {
         my $error = $@;
         my $res;
-        if ( blessed $error ) {
+        if ( blessed $error && $error->isa('Net::OpenAPI::Exceptions::Base') ) {
             $res = $req->new_response( $error->status_code );
             if ( my $info = $error->info ) {
-                $res->content_type('text/plain');
-                $res->body($info);
+                $res->content_type('application/json');
+                $res->body(
+                    encode_json(
+                        {
+                            info    => $info,
+                            code    => $error->status_code,
+                            message => $error->message,
+                        }
+                    )
+                );
             }
         }
         else {

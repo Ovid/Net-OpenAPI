@@ -8,11 +8,12 @@ sub test_create_package {
     my $test = shift;
 
     ok my $package = $test->class_name->new(
-        name => 'My::Project::Model::Store',
-        base => 'My::Project::Model',
+        root => 'Store',
+        base => 'My::Project',
       ),
       'We should be able to create a package object';
-    is $package->name, 'My::Project::Model::Store', '... and it should return its package name';
+    is $package->model_name,      'My::Project::Model::Store',      '... and it should return its model name';
+    is $package->controller_name, 'My::Project::Controller::Store', '... and it should return its controller name';
 
     ok my $method = $package->add_method(
         http_method => 'get',
