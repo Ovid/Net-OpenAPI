@@ -11,7 +11,6 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Package;
 
 use Net::OpenAPI::Utils::Core qw(
-  resolve_method
   resolve_root
 );
 use Net::OpenAPI::App::Types qw(
@@ -74,7 +73,6 @@ sub write {
 
     my $routes = $schema->routes;
     my $base   = $self->base;
-    my @methods;
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
@@ -84,10 +82,6 @@ sub write {
               = $schema->get(  [ "paths", $path, $http_method, "description" ] )
               || $schema->get( [ "paths", $path, $http_method, "summary" ] )
               || 'No description found';
-            my ( $method_name, $args ) = resolve_method(
-                $http_method,
-                $path,
-            );
             my $root    = resolve_root($path);
             my $package = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
             $package->add_method(
@@ -137,8 +131,11 @@ sub {
       or return $req->new_response(404)->finalize;
 
     my $dispatcher = $match->{dispatch};
-    my $res;
-    if ( eval { $res = $dispatcher->( $req, $match ); 1 } ) {
+    my $res = $req->new_response(200);
+    $res->content_type('application/json');
+    my $result;
+    if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
+        $res->body(encode_json($result));
         $res->finalize;
     }
     else {

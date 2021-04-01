@@ -89,6 +89,7 @@ sub match {
     my ( $self, $req ) = @_;
     state $dispatch_cache = {};
     my $match = $self->_match($req) or return;
+
     my ( $package, $function ) = @{$match}{qw/dispatch_to action/};
     unless ( exists $dispatch_cache->{$package}{$function} ) {
 
@@ -130,12 +131,10 @@ sub _match {
         }
 
         $matched = 1;
-        my $exact_match = 1;
-        my $has_param;
+        my %param;
         SEGMENT: for my $i ( 0 .. $#new ) {
-            if ( $stored[$i] =~ /^{/ ) {    # it's a param, so it always matches
-                $has_param   = 1;
-                $exact_match = 0;
+            if ( $stored[$i] =~ /^{(?<arg>[^}]+)}/ ) {    # it's a param, so it always matches
+                $param{ $+{arg} } = $new[$i];
                 next SEGMENT;
             }
             elsif ( $stored[$i] ne $new[$i] ) {
@@ -143,8 +142,9 @@ sub _match {
                 last SEGMENT;
             }
         }
-        if ( $matched && $exact_match ) {
-            return $route_for->{$this_path};
+        if ( $matched && !keys %param ) {
+            my $match = $route_for->{$this_path};
+            return { %$match, uri_params => {} };
         }
         else {
             # XXX OpenAPI doesn't forbid "ambiguous" paths, but clearly they exist
@@ -156,10 +156,16 @@ sub _match {
             # because if there was an exact match, we would already have had
             # it
             # https://github.com/OAI/OpenAPI-Specification/issues/2356
-            push @candidate_matches => $route_for->{$this_path} if $has_param;
+            if ( keys %param ) {
+
+                # we have parameters, so this is not an exact match and might
+                # be a candidate for matching.
+                push @candidate_matches => [ $route_for->{$this_path}, \%param ];
+            }
         }
     }
-    return shift @candidate_matches;
+    my $candidate = shift @candidate_matches;
+    return { %{ $candidate->[0] }, uri_params => $candidate->[1] };
 }
 
 1;

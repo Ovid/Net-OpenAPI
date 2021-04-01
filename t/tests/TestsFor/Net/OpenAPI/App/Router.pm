@@ -80,7 +80,7 @@ sub test_ambiguous_matches {
     my $test = shift;
 
     package Example::Package::For::Dispatch {
-        use Net::OpenAPI::App::Endpoint debug => 1;
+        use Net::OpenAPI::App::Endpoint;
 
         endpoint 'get /pet/findByStatus' => sub {'get_findByStatus'};
         endpoint 'get /pet/findByTags'   => sub {'get_findByTags'};
@@ -103,8 +103,10 @@ sub test_ambiguous_matches {
         PATH_INFO      => '/pet/3',
     };
     use Plack::Request;
-    my $req = Plack::Request->new($env);
+    my $req   = Plack::Request->new($env);
     my $match = $router->match($req);
     is $match->{dispatch}->($req), 'with_args_get', 'We should be able to dispatch directly to subs';
+    eq_or_diff $match->{uri_params}, { petId => 3 },
+      '... and we should get our uri_params returned, too';
 }
 __PACKAGE__->meta->make_immutable;
