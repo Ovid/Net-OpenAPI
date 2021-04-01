@@ -67,7 +67,7 @@ sub resolve_method {
     my ( $root, @path ) = grep {/\S/} split m{/} => $path;
     $root = ucfirst _normalize_string($root);
     my @args;
-    my $method = $http_method;
+    my $method = lc $http_method;
     foreach my $element (@path) {
         if ( $element =~ /^{(?<arg>\w+)}$/ ) {
             push @args => $+{arg};

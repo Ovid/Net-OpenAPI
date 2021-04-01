@@ -76,7 +76,7 @@ sub write {
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
-            my $http_method  = $route->{http_method};
+            my $http_method  = $route->{method};
             my $operation_id = $route->{operation_id};
             my $path         = $route->{path};
             my $description

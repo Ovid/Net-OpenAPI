@@ -51,7 +51,7 @@ sub to_string {
     my $self = shift;
     return template(
         'method',
-        { map { $_ => $self->$_ } qw/name path http_method description/ }
+        { map { $_ => $self->$_ } qw/path http_method description/ }
     );
 }
 

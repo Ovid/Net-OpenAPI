@@ -74,6 +74,8 @@ package [% name %];
 use strict;
 use warnings;
 use Net::OpenAPI::Exceptions::HTTP::NotImplemented;
+use Net::OpenAPI::App::Endpoint;
+use namespace::autoclean;
 
 [% reserved %]
 
@@ -92,18 +94,16 @@ END
 
 sub _method_template {
     return <<'END';
-=head2 C<[% name %]>
-
-Route: [% http_method %] [% path %]
+=head2 C<[% http_method %] [% path %]>
 
 [% description %]
 
 =cut
 
-sub [% name %] {
+endpoint '[% http_method %] [% path %]' => sub {
     my ($request, $params) = @_;
     Net::OpenAPI::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
-}
+};
 END
 }
 
