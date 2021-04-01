@@ -4,6 +4,8 @@ use Moo;
 use Data::Dumper;
 use Net::OpenAPI::Utils::Template qw(template);
 use Net::OpenAPI::Utils::Core qw(tidy_code);
+use String::Escape qw(quote);
+use Scalar::Util qw(looks_like_number blessed);
 use Net::OpenAPI::App::Types qw(
   ArrayRef
   Dict
@@ -55,14 +57,6 @@ has parameters => (
     required => 1,
 );
 
-sub _format_params {
-    my ( $self, $params ) = @_;
-    local $Data::Dumper::Indent   = 1;
-    local $Data::Dumper::Sortkeys = 1;
-    local $Data::Dumper::Terse    = 1;
-    return tidy_code( Dumper($params) );
-}
-
 sub request_params {
     my $self   = shift;
     my $params = $self->parameters->{request} or return 'None';
@@ -81,6 +75,47 @@ sub to_string {
         'method',
         { map { $_ => $self->$_ } qw/request_params response_params path http_method description/ }
     );
+}
+
+sub _format_params {
+
+    # this ugly bit of code is designed to ensure that each component of a
+    # parameter shows up on a single line in the docs. It makes them much
+    # easier to read than the current sprawl.
+    my ( $self, $params ) = @_;
+    local $Data::Dumper::Indent   = 0;
+    local $Data::Dumper::Sortkeys = 1;
+    local $Data::Dumper::Terse    = 1;
+    my @params = @$params;
+    my $docs   = '';
+    foreach my $param (@params) {
+        $docs .= "    {\n";
+        my $max = $self->_max_length( keys %$param );
+        foreach my $field ( sort keys %$param ) {
+            my $value = $param->{$field};
+            if ( blessed $value ) {
+                $value = 0 + $value;    # JSON::PP::Boolean and friends
+            }
+            elsif ( ref $value ) {
+                $value = Dumper($value);
+            }
+            elsif ( !looks_like_number($value) ) {
+                $value = quote($value // 0);
+            }
+            $docs .= sprintf "        %-${max}s => $value,\n" => $field;
+        }
+        $docs .= "    }\n";
+    }
+    return $docs;
+}
+
+sub _max_length {
+    my ( $self, @strings ) = @_;
+    my $max = 0;
+    for (@strings) {
+        $max = length($_) if length($_) > $max;
+    }
+    return $max;
 }
 
 1;
