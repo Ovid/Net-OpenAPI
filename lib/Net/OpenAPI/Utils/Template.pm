@@ -73,8 +73,8 @@ package [% name %];
 
 use strict;
 use warnings;
-use Net::OpenAPI::Exceptions::HTTP::NotImplemented;
 use Net::OpenAPI::App::Endpoint;
+use Net::OpenAPI::App::Exceptions qw(throw);
 use namespace::autoclean;
 
 [% reserved %]
@@ -110,7 +110,7 @@ sub _method_template {
 
 endpoint '[% http_method %] [% path %]' => sub {
     my ($request, $params) = @_;
-    Net::OpenAPI::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
+    throw( NotImplemented => "[% http_method %] [% path %]" );
 };
 END
 }
