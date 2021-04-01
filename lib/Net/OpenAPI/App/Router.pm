@@ -8,6 +8,7 @@ use Module::Runtime qw(require_module);
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
   compile
+  ArrayRef
   Dict
   HTTPMethod
   MethodName
@@ -86,19 +87,22 @@ If more than one inexact match is found, returns one effectively randomly
 
 sub match {
     my ( $self, $req ) = @_;
-    state $dispatch = {};
+    state $dispatch_cache = {};
     my $match = $self->_match($req) or return;
     my ( $package, $function ) = @{$match}{qw/dispatch_to action/};
-    unless ( exists $dispatch->{$package}{$function} ) {
+    unless ( exists $dispatch_cache->{$package}{$function} ) {
+
+        # it's not in the dispatch cache, so let's load the module
+        # and grab the action we're dispatching to.
         require_module($package);
         my $fq_name = "${package}::${function}";
         no strict 'refs';
         unless ( defined *{$fq_name}{CODE} ) {
             croak("Cannot dispatch to non-existent sub ($fq_name)");
         }
-        $dispatch->{$package}{$function} = *{$fq_name}{CODE};
+        $dispatch_cache->{$package}{$function} = *{$fq_name}{CODE};
     }
-    $match->{dispatch} = $dispatch->{$package}{$function};
+    $match->{dispatch} = $dispatch_cache->{$package}{$function};
     return $match;
 }
 
@@ -116,7 +120,7 @@ sub _match {
     my $route_for = $self->_routes->{ $req->method }{$segments}{$prefix} or return;
 
     my $matched = 0;
-    my @matches;
+    my @candidate_matches;
     PATH: foreach my $this_path ( keys %$route_for ) {
         my @new    = split '/' => $path;
         my @stored = split '/' => $this_path;
@@ -127,8 +131,10 @@ sub _match {
 
         $matched = 1;
         my $exact_match = 1;
+        my $has_param;
         SEGMENT: for my $i ( 0 .. $#new ) {
             if ( $stored[$i] =~ /^{/ ) {    # it's a param, so it always matches
+                $has_param   = 1;
                 $exact_match = 0;
                 next SEGMENT;
             }
@@ -141,10 +147,19 @@ sub _match {
             return $route_for->{$this_path};
         }
         else {
-            push @matches => $route_for->{$this_path};
+            # XXX OpenAPI doesn't forbid "ambiguous" paths, but clearly they exist
+            # and it's hard to know, up front, what to do about it. However,
+            # if we don't have an exact match, we fall back to "candidate"
+            # matches and return the first one, but this is hash-ordered and
+            # thus not deterministic. We need a better solution.
+            # But for candidate matches, if only use routes with parameters
+            # because if there was an exact match, we would already have had
+            # it
+            # https://github.com/OAI/OpenAPI-Specification/issues/2356
+            push @candidate_matches => $route_for->{$this_path} if $has_param;
         }
     }
-    return shift @matches;
+    return shift @candidate_matches;
 }
 
 1;

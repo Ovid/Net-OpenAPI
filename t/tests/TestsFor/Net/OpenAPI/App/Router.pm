@@ -76,4 +76,35 @@ sub test_match {
       '... and dispatching to a module we cannot load should fail';
 }
 
+sub test_ambiguous_matches {
+    my $test = shift;
+
+    package Example::Package::For::Dispatch {
+        use Net::OpenAPI::App::Endpoint debug => 1;
+
+        endpoint 'get /pet/findByStatus' => sub {'get_findByStatus'};
+        endpoint 'get /pet/findByTags'   => sub {'get_findByTags'};
+        endpoint 'get /pet/{petId}'      => sub {'with_args_get'};
+    }
+    $INC{'Example/Package/For/Dispatch.pm'} = 1;    # fake loading it
+    my $router = $test->class_name->new;
+    my @routes = (
+        { path => '/pet/findByStatus', http_method => 'get', dispatch_to => 'Example::Package::For::Dispatch', action => 'get_findByStatus' },
+        { path => '/pet/findByTags',   http_method => 'get', dispatch_to => 'Example::Package::For::Dispatch', action => 'get_findByTags' },
+        { path => '/pet/{petId}',      http_method => 'get', dispatch_to => 'Example::Package::For::Dispatch', action => 'with_args_get' },
+    );
+    foreach my $route (@routes) {
+        my ( $method, $path ) = @{$route}{qw/http_method path/};
+        ok $router->add_route($route), "We should be able to add routes to our router: $method $path";
+    }
+    my $env = {
+        REQUEST_METHOD => 'GET',
+        HTTP_HOST      => 'example.com',
+        PATH_INFO      => '/pet/3',
+    };
+    use Plack::Request;
+    my $req = Plack::Request->new($env);
+    my $match = $router->match($req);
+    is $match->{dispatch}->($req), 'with_args_get', 'We should be able to dispatch directly to subs';
+}
 __PACKAGE__->meta->make_immutable;
