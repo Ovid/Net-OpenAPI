@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::Locked;
 # ABSTRACT: Exception class for the HTTP '423 Locked' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

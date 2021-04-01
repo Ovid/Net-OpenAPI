@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::RequestedRangeNotSatisfiable;
 # ABSTRACT: Exception class for the HTTP '416 Requested Range Not Satisfiable' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

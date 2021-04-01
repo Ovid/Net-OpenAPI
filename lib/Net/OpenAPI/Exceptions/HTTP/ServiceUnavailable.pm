@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::ServiceUnavailable;
 # ABSTRACT: Exception class for the HTTP '503 Service Unavailable' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

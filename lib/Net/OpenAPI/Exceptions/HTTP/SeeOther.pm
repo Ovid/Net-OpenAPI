@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::SeeOther;
 # ABSTRACT: Exception class for the HTTP '303 See Other' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

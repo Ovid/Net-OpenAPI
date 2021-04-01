@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::NetworkAuthenticationRequired;
 # ABSTRACT: Exception class for the HTTP '511 Network Authentication Required' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

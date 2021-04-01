@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::PaymentRequired;
 # ABSTRACT: Exception class for the HTTP '402 Payment Required' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

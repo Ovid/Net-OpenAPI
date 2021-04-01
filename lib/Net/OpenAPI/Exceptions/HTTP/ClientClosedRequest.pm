@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::ClientClosedRequest;
 # ABSTRACT: Exception class for the HTTP '499 Client Closed Request' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

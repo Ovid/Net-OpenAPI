@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::Gone;
 # ABSTRACT: Exception class for the HTTP '410 Gone' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 

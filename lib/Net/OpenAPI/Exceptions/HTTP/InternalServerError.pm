@@ -3,6 +3,7 @@ package Net::OpenAPI::Exceptions::HTTP::InternalServerError;
 # ABSTRACT: Exception class for the HTTP '500 Internal Server Error' error
 
 use Moo;
+extends 'Net::OpenAPI::Exceptions::Base';
 with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 
