@@ -24,6 +24,16 @@ our @EXPORT_OK = qw(
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
+=head1 FUNCTIONS
+
+All functions are exportable on demand via:
+
+    use Net::OpenAPI::Utils::File 'slurp';
+
+Or all at once:
+
+    use Net::OpenAPI::Utils::File ':all';
+
 =head2 C<write_file>
 
     write_file(
@@ -90,30 +100,6 @@ sub splat {
     open my $fh, '>', $file or croak qq{Can't open file "$file": $!};
     print {$fh} $content or croak qq{Can't write to file "$file": $!};
     return $file;
-}
-
-=head1 FUNCTIONS
-
-All functions are exportable on demand via:
-
-    use Net::OpenAPI::Utils::Core 'trim';
-
-Or all at once:
-
-    use Net::OpenAPI::Utils::Core ':all';
-
-=head2 C<trim($text)>
-
-    my $trimmed = trim($text);
-
-Trims leading and trailing whitespace from C<$text>.
-
-=cut
-
-sub trim {
-    my $text = shift;
-    $text =~ s/^\s+|\s+$//g;
-    return $text;
 }
 
 1;
