@@ -3,6 +3,7 @@
 * Document generation (https://nordicapis.com/7-open-source-openapi-documentation-generators/)
 * Testing
 * Logging
+* Allow names to be remapped (similar to Schema loader)
 * Text::UniDecode to allow for non-ascii routes
 * Versioning (OpenAPI v1 and v2)
 * Versioning (app versioning)
