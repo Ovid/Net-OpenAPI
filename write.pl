@@ -21,7 +21,7 @@ __END__
 
 =head1 NAME
 
-write.pl - same openapi generator
+write.pl - Sample openapi server generator
 
 =head1 SYNOPSIS
 
