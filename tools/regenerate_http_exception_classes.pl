@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 
-use OpenAPI::Microservices::Policy;
-my $base = 'OpenAPI::Microservices::Exceptions::HTTP::';
-my $base_path = 'OpenAPI/Microservices/Exceptions/HTTP/';
+use Net::OpenAPI::Policy;
+my $base = 'Net::OpenAPI::Exceptions::HTTP::';
+my $base_path = 'Net/OpenAPI/Exceptions/HTTP/';
 
 while ( my $status = <DATA> ) {
     chomp($status);
@@ -27,9 +27,9 @@ sub test {
     return <<"END";
 package $package;
 
-use Test::Class::Moose extends => 'Test::OpenAPI::Microservices';
+use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 use Moose;
-with 'Test::OpenApi::Microservices::Exceptions::Role::HTTP';
+with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 
 sub status_code {$code}
 sub message     {'$message'}
@@ -46,12 +46,12 @@ package $package;
 # ABSTRACT: Exception class for the HTTP '$code $message' error
 
 use Moo;
-with 'OpenAPI::Microservices::Exceptions::Role::HTTP';
+with 'Net::OpenAPI::Exceptions::Role::HTTP';
 use overload '""' => 'to_string', fallback => 1;
 
 =head1 IMPLEMENTS
 
-This class implements the 'OpenAPI::Microservices::Exceptions::Role::HTTP' role.
+This class implements the 'Net::OpenAPI::Exceptions::Role::HTTP' role.
 
 =head1 METHODS
 

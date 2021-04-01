@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 
 use lib 'lib';
-use OpenAPI::Microservices::Policy;
-use OpenAPI::Microservices::Builder;
+use Net::OpenAPI::Policy;
+use Net::OpenAPI::Builder;
 
-my $builder = OpenAPI::Microservices::Builder->new(
+my $builder = Net::OpenAPI::Builder->new(
     schema => 'data/v3-petstore.json',
     base   => 'My::Project::OpenAPI::Model',
     dir    => 'target',

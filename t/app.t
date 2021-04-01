@@ -53,10 +53,10 @@ t/app.t - Run xUnit tests
     prove -v t/app.t
 
     # run a single test class
-    prove -v t/app.t :: TestsFor::OpenAPI::Microservices::Utils::ReWrite
+    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::ReWrite
 
     # run a single test class
-    prove -v t/app.t :: t/tests/TestsFor/OpenAPI/Microservices/Utils/ReWrite.pm
+    prove -v t/app.t :: t/tests/TestsFor/Net/OpenAPI/Utils/ReWrite.pm
 
     # run test methods matching regex "test_rewrite"
-    prove -v t/app.t :: TestsFor::OpenAPI::Microservices::Utils::ReWrite --method test_rewrite
+    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::ReWrite --method test_rewrite
