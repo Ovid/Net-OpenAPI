@@ -5,12 +5,12 @@ package OpenAPI::Microservices::Utils::File;
 use OpenAPI::Microservices::Policy;
 use OpenAPI::Microservices::Utils::ReWrite;
 use OpenAPI::Microservices::App::Types qw(
-    Bool
-    Dict
-    Directory
-    NonEmptyStr
-    Optional
-    compile_named
+  Bool
+  Dict
+  Directory
+  NonEmptyStr
+  Optional
+  compile_named
 );
 
 use File::Path qw(make_path);
@@ -41,20 +41,17 @@ will use L<OpenAPI::Microservices::Utils::ReWrite> to rewrite the contents.
 
 sub write_file {
     state $check = compile_named(
-        path      => Directory,
-        file      => NonEmptyStr,
-        document  => NonEmptyStr,
-        rewrite   => Optional [Bool],
-        overwrite => Optional [Bool],
+        path     => Directory,
+        file     => NonEmptyStr,
+        document => NonEmptyStr,
+        rewrite  => Optional [Bool],
     );
     my $arg_for = $check->(@_);
-    $arg_for->{overwrite} //= 1; # default
     make_path( $arg_for->{path} );
     my $file = catfile( $arg_for->{path}, $arg_for->{file} );
     if ( -e $file ) {
-        return unless $arg_for->{overwrite};
         my $contents = slurp($file);
-        my $rewrite = OpenAPI::Microservices::Utils::ReWrite->new(
+        my $rewrite  = OpenAPI::Microservices::Utils::ReWrite->new(
             old_text   => $contents,
             new_text   => $arg_for->{document},
             identifier => $file,

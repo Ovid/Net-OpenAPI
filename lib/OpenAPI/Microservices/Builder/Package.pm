@@ -106,6 +106,8 @@ sub _get_controller_code {
     my $code       = '';
     my $model      = $self->name;
     my $controller = $model;
+
+    # XXX This wasn't planned well. Please revisit this.
     $controller =~ s/::Model::/::Controller::/;
 
     # the sort keeps the auto-generated code deterministic. We put short paths

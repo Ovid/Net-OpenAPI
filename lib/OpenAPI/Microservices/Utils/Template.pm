@@ -64,7 +64,6 @@ The model handling this controller is L<[% model %]>.
 
 Requests handled by controller method L<[% method.name %]>
 [% END %]
-}
 END
 }
 
