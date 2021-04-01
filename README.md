@@ -6,6 +6,12 @@ Net::OpenAPI - Build out the shell of a microservice from an OpenAPI definition
 
 version 0.01
 
+# APOLOGY
+
+Sorry, not much here right now. Run the `write.pl` executable in the
+top-level directory and examine the resulting `target/` directory
+to see the output.
+
 # AUTHOR
 
 Curtis "Ovid" Poe <ovid@allaroundtheworld.fr>
