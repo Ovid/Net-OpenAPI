@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {507}
 sub message     {'Insufficient Storage'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

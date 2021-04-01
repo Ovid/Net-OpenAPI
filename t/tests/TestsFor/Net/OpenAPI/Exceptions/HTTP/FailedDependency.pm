@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {424}
 sub message     {'Failed Dependency'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

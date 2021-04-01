@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {406}
 sub message     {'Not Acceptable'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

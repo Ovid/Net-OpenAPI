@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {304}
 sub message     {'Not Modified'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

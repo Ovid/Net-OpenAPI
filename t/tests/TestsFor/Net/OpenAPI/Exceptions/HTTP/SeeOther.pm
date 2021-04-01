@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {303}
 sub message     {'See Other'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

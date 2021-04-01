@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {409}
 sub message     {'Conflict'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

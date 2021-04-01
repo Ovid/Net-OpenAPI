@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {431}
 sub message     {'Request Header Fields Too Large'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

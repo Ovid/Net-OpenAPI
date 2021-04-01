@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {599}
 sub message     {'Network Connect Timeout Error'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

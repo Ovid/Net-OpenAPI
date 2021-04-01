@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {301}
 sub message     {'Moved Permanently'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

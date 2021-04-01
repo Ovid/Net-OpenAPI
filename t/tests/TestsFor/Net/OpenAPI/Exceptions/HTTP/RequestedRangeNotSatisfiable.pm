@@ -7,5 +7,5 @@ with 'Test::Net::OpenAPI::Exceptions::Role::HTTP';
 sub status_code {416}
 sub message     {'Requested Range Not Satisfiable'}
 
-1;
+__PACKAGE__->meta->make_immutable;
 
