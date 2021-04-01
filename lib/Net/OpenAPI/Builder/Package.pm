@@ -57,7 +57,7 @@ sub add_method {
     );
 
     if ( $self->_has_method($method_name) ) {
-        croak("Cannot re-add method '$arg_for->{method}'");
+        croak("Cannot re-add action '$arg_for->{action}'");
     }
     my $method = Net::OpenAPI::Builder::Method->new(
         package     => $self,
@@ -118,7 +118,7 @@ sub _get_controller_code {
         my $http_method = $method->http_method;
         my $path        = $method->path;
         my $name        = $method->name;
-        $code .= "        { path => '$path', http_method => '$http_method', dispatch_to => '$model',  method => '$name' },\n";
+        $code .= "        { path => '$path', http_method => '$http_method', dispatch_to => '$model',  action => '$name' },\n";
     }
     chomp($code);
     $code = <<"END";

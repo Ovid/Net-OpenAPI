@@ -101,7 +101,6 @@ Route: [% http_method %] [% path %]
 =cut
 
 sub [% name %] {
-    my $self = shift;
     my ($request, $params) = @_;
     Net::OpenAPI::Exceptions::HTTP::NotImplemented->throw("[% http_method %] [% path %]");
 }

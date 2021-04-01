@@ -4,6 +4,7 @@ package Net::OpenAPI::App::Router;
 
 use 5.16.0;
 use Moo;
+use Module::Runtime qw(require_module);
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
   compile
@@ -30,7 +31,7 @@ has _routes => (
             http_method => $http_method,
             path        => $path,
             dispatch_to => $class_name,
-            method      => $method,
+            action      => $method,
         }
     );
 
@@ -46,7 +47,7 @@ sub add_route {
             path        => OpenAPIPath,
             http_method => HTTPMethod,
             dispatch_to => PackageName,
-            method      => MethodName,
+            action      => MethodName,
         ]
     );
     ($route) = $check->($route);
@@ -84,6 +85,24 @@ If more than one inexact match is found, returns one effectively randomly
 =cut
 
 sub match {
+    my ( $self, $req ) = @_;
+    state $dispatch = {};
+    my $match = $self->_match($req) or return;
+    my ( $package, $function ) = @{$match}{qw/dispatch_to action/};
+    unless ( exists $dispatch->{$package}{$function} ) {
+        require_module($package);
+        my $fq_name = "${package}::${function}";
+        no strict 'refs';
+        unless ( defined *{$fq_name}{CODE} ) {
+            croak("Cannot dispatch to non-existent sub ($fq_name)");
+        }
+        $dispatch->{$package}{$function} = *{$fq_name}{CODE};
+    }
+    $match->{dispatch} = $dispatch->{$package}{$function};
+    return $match;
+}
+
+sub _match {
     my ( $self, $req ) = @_;
 
     # routes are keyed by:

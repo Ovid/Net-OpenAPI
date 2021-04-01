@@ -76,7 +76,7 @@ sub write {
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
-            my $http_method  = $route->{method};
+            my $http_method  = $route->{http_method};
             my $operation_id = $route->{operation_id};
             my $path         = $route->{path};
             my $description
@@ -134,11 +134,9 @@ sub {
     my $match = $router->match($req)
       or return $req->new_response(404)->finalize;
 
-    my $handling_class = $match->{dispatch_to};
-    my $method         = $handling_class->can( $match->{method} )
-      or return $req->new_response(405)->finalize;
+    my $dispatcher = $match->{dispatch};
     my $res;
-    if ( eval { $res = $handling_class->$method( $req, $match ); 1 } ) {
+    if ( eval { $res = $dispatcher->( $req, $match ); 1 } ) {
         $res->finalize;
     }
     else {
