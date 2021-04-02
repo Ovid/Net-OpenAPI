@@ -79,6 +79,7 @@ sub to_string {
             path            => $self->path,
             http_method     => $self->http_method,
             description     => $self->description,
+            response_class  => 'Net::OpenAPI::App::Response', # XXX Fixme
         }
     );
 }

@@ -215,7 +215,8 @@ package [% name %];
 use strict;
 use warnings;
 use Net::OpenAPI::App::Endpoint;
-use Net::OpenAPI::App::Exceptions qw(throw);
+use [% response_class %];
+use Net::OpenAPI::App::StatusCodes qw(HTTPNotImplemented);
 use namespace::autoclean;
 
 $REWRITE_BOUNDARY
@@ -268,7 +269,10 @@ sub _method_template {
 
 endpoint '[% http_method %] [% path %]' => sub {
     my ($request, $params) = @_;
-    throw( NotImplemented => "[% http_method %] [% path %]" );
+    return [% response_class %]->new(
+       status_code => HTTPNotImplemented,
+       body        => { info => '[% http_method %] [% path %]' },
+    );
 };
 END
 }
@@ -329,25 +333,11 @@ sub get_app {
         $res->content_type('application/json');
         my $result;
         if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
-            $res->body( encode_json($result) );
-            $res->finalize;
-        }
-        else {
-            my $error = $@;
-            my $res;
-            if ( blessed $error && $error->isa('Net::OpenAPI::Exceptions::Base') ) {
-                $res = $req->new_response( $error->status_code );
-                if ( my $info = $error->info ) {
+            if ( blessed $result && $result->isa('Net::OpenAPI::App::Response') ) {
+                $res = $req->new_response( $result->status_code );
+                if ( my $body = $result->body ) {
                     $res->content_type('application/json');
-                    $res->body(
-                        encode_json(
-                            {
-                                info    => $info,
-                                code    => $error->status_code,
-                                message => $error->message,
-                            }
-                        )
-                    );
+                    $res->body( encode_json($body) );
                 }
             }
             else {

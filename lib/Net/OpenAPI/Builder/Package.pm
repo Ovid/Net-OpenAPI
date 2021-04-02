@@ -179,9 +179,10 @@ END
     my $model_code = template(
         'model',
         {
-            name          => $model_name,
-            get_endpoints => $self->get_endpoints,
-            reserved      => tidy_code($code),
+            name           => $model_name,
+            get_endpoints  => $self->get_endpoints,
+            reserved       => tidy_code($code),
+            response_class => 'Net::OpenAPI::App::Response', # XXX Fixme
         }
     );
 
