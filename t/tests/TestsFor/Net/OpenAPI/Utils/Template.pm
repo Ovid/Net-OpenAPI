@@ -43,6 +43,16 @@ sub test_errors {
     throws_ok { template( 'example', \%args ) }
     qr/The following variables were passed to the 'example' template but not used: extra/,
       'Processing a template with extra fields should generate an error';
+
+    explain template(
+        'app',
+        {
+            package     => 'My::Package',
+            models      => [ 'My::Model', 'My::Model2' ],
+            controllers => [ 'My::Controller', 'My::Controller2' ],
+            base        => 'My App Name',
+        }
+    );
 }
 
 1;

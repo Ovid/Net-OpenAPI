@@ -150,13 +150,11 @@ $code
     );
 }
 END
-    $code = tidy_code($code);
-    my $rewrite = Net::OpenAPI::Utils::ReWrite->new( new_text => $code, identifier => $controller );
     my ( $path, $filename ) = $self->_get_path_and_file( $dir, $controller );
     my $controller_code = template(
         'controller',
         {
-            code_for_routes => $rewrite->rewritten,
+            code_for_routes => tidy_code($code),
             methods         => \@methods,
             package         => $controller,
             model           => $model,
@@ -174,14 +172,12 @@ sub _get_model_code {
 # This space is reserved for future code.
 END
 
-    my $rewrite = Net::OpenAPI::Utils::ReWrite->new( new_text => $code, identifier => $model_name );
-
     my $model_code = template(
         'model',
         {
             name        => $model_name,
             get_methods => $self->get_methods,
-            reserved    => $rewrite->rewritten,
+            reserved    => tidy_code($code),
         }
     );
 

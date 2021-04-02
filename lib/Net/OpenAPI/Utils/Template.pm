@@ -1,5 +1,15 @@
 package Net::OpenAPI::Utils::Template;
 
+=head1 WARNING
+
+Don't just C<perldoc Net::OpenAPI::Utils::Template>. This module contains
+templates and those templates often contain POD. POD parsers get confused and
+show some very messed up POD. Use the source, Luke.
+
+=cut
+
+# ABSTRACT: Code templates for Net::OpenAPI. Internal use only
+
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Template::Tiny;
 use Net::OpenAPI::Utils::ReWrite;
@@ -33,6 +43,7 @@ sub template {
 sub _get_template {
     my $requested = shift;
     my %template = (
+        app        => \&_app_template,
         controller => \&_controller_template,
         model      => \&_model_template,
         method     => \&_method_template,
@@ -41,6 +52,43 @@ sub _get_template {
     my $code = $template{$requested} or croak("No such template for '$requested'");
     return $code->();
 }
+
+=head1 SYNOPSIS
+
+    use Net::OpenAPI::Utils::Template qw(template);
+    print template(
+        'app',
+        {
+            package     => 'My::Package',
+            models      => [ 'My::App::OpenAPI::Model', 'My::App::OpenAPI::Model2' ],
+            controllers => [ 'My::App::OpenAPI::Controller', 'My::App::OpenAPI::Controller2' ],
+            base        => 'My::App::OpenAPI',
+        }
+    );
+
+=head1 DESCRIPTION
+
+We use these templates to autogenerate our code. You must pass in the data required.
+See L<Net::OpenAPI::Utils::Template::Tiny> to understand template behavior.
+
+=head1 TEMPLATES
+
+The following templates are provided.
+
+=head2 C<example>
+
+    my $output = template(
+        'example',
+        {
+            foo => 'oof',
+            bar => 'rab',
+            baz => 'zab',
+        }
+    );
+
+Requires three variables, all of which should be strings. C<foo>, C<bar>, C<baz>.
+
+=cut
 
 sub _example_template {
     # this is used for tests
@@ -57,14 +105,30 @@ Baz: [% baz %]
 END
 }
 
+=head2 C<controller>
+
+    my $controller_code = template(
+        'controller',
+        {
+            code_for_routes => tidy_code($code),
+            methods         => \@methods,
+            package         => $controller,
+            model           => $model,
+        }
+    );
+
+=cut
+
 sub _controller_template {
-    return <<'END';
+    return <<"END";
 package [% package %];
 
 use strict;
 use warnings;
 
+$REWRITE_BOUNDARY
 [% code_for_routes %]
+$REWRITE_BOUNDARY
 
 1;
 
@@ -94,8 +158,21 @@ Requests handled by controller method L<[% method.name %]>
 END
 }
 
+=head2 C<model>
+
+    my $model_code = template(
+        'model',
+        {
+            name        => $model_name,
+            get_methods => $self->get_methods,
+            reserved    => tidy_code($code),
+        }
+    );
+
+=cut
+
 sub _model_template {
-    return <<'END';
+    return <<"END";
 package [% name %];
 
 use strict;
@@ -104,7 +181,9 @@ use Net::OpenAPI::App::Endpoint;
 use Net::OpenAPI::App::Exceptions qw(throw);
 use namespace::autoclean;
 
+$REWRITE_BOUNDARY
 [% reserved %]
+$REWRITE_BOUNDARY
 
 =head1 NAME
 
@@ -118,6 +197,21 @@ use namespace::autoclean;
 1;
 END
 }
+
+=head2 C<_method_template>
+
+    return template(
+        'method',
+        {
+            request_params  => $method->request_params,
+            response_params => $method->response_params,
+            path            => $method->path,
+            http_method     => $method->http_method,
+            description     => $method->description,
+        }
+    );
+
+=cut
 
 sub _method_template {
     return <<'END';
@@ -142,16 +236,67 @@ endpoint '[% http_method %] [% path %]' => sub {
 END
 }
 
+=head2 C<app>
+
+    print template(
+        'app',
+        {
+            package     => 'My::Package',
+            models      => [ 'My::Model', 'My::Model2' ],
+            controllers => [ 'My::Controller', 'My::Controller2' ],
+            base        => 'My App Name',
+        }
+    );
+
+=cut
+
 sub _app_template {
-    return <<'END';
+    return <<"END";
 package [% package %]
 
+use v5.16.0;
 use strict;
 use warnings;
 
-[% FOR controller IN controllers %]
+$REWRITE_BOUNDARY
+[% FOREACH controller IN controllers %]use [% controller %];
+[% END %]
+[% FOR model IN models %]use [% model %];
+[% END %]
+sub routes {
+    state \$routes = [];
+    unless (\@\$routes) {
+[% FOREACH controller IN controllers %]        push \@\$routes => [% controller %]->routes;
+[% END %]    }
+    return \$routes;
+}
+$REWRITE_BOUNDARY
 
+1;
+
+__END__
+
+=head1 NAME
+
+[% package %] - Application module for [% base %]
+
+=head1 SYNOPSIS
+
+    use [% package %];
+    use Net::OpenAPI::App::Router;
+
+    my \$router = Net::OpenAPI::App::Router->new;
+    \$router->add_routes([% package %]->routes)
 END
 }
 
 1;
+
+__END__
+=head1 TEMPLATES
+
+The following templates are supplied.
+        app        => \&_app_template,
+        controller => \&_controller_template,
+        model      => \&_model_template,
+        method     => \&_method_template,
