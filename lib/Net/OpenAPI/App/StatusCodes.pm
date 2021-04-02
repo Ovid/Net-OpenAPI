@@ -5,7 +5,6 @@ package Net::OpenAPI::App::StatusCodes;
 use Net::OpenAPI::Policy;
 use Exporter 'import';
 our @EXPORT_OK = qw(
-  status_code_for
   status_message_for
   is_info
   is_success
@@ -112,56 +111,29 @@ die $@ if $@;
 
 =head2 FUNCTIONS
 
-=head2 C<status_code_for>
-
-    use Net::OpenAPI::App::StatusCodes qw(status_code_for :constants);
-    my $status_for_for = status_code_for('BadGateway');
-    my $status_for_for = status_code_for(HTTPTemporaryRedirect);
-
-Return the HTTP status code for the given message or constant.
-
-=cut
-
-sub status_code_for {
-    my $short_name = shift;
-
-    # they probably called this with a constant:
-    # status_code_for(HTTPInternalServerError)
-    return $short_name if $short_name =~ /^\d\d\d$/a;
-    return $CODE_FOR_SHORT_NAME{$short_name};
-}
-
 =head2 C<status_message_for>
 
-    my $message = status_message_for(403); # Forbidden
+    my $message = status_message_for(403);              # Forbidden
+    my $message = status_message_for(HTTPForbidden);    # Forbidden
 
 Returns the message corresponding to the status code.
 
 =cut
 
 sub status_message_for {
-    my $code = _normalize_code(shift);
-    return $MESSAGE_FOR{$code};
-}
-
-sub _normalize_code {
-    my $code = shift;
-    unless ( $code =~ /^\d\d\d$/a ) {
-        $code = status_code_for($code) or return;
-    }
-    return $code;
+    return $MESSAGE_FOR{+shift};
 }
 
 # "liberated" from HTTP::Status
-sub is_info ($)         { my $code = _normalize_code(shift); $code && $code >= 100 && $code < 200; }
-sub is_success ($)      { my $code = _normalize_code(shift); $code && $code >= 200 && $code < 300; }
-sub is_redirect ($)     { my $code = _normalize_code(shift); $code && $code >= 300 && $code < 400; }
-sub is_error ($)        { my $code = _normalize_code(shift); $code && $code >= 400 && $code < 600; }
-sub is_client_error ($) { my $code = _normalize_code(shift); $code && $code >= 400 && $code < 500; }
-sub is_server_error ($) { my $code = _normalize_code(shift); $code && $code >= 500 && $code < 600; }
+sub is_info ($)         { my $code = shift; $code && $code >= 100 && $code < 200; }
+sub is_success ($)      { my $code = shift; $code && $code >= 200 && $code < 300; }
+sub is_redirect ($)     { my $code = shift; $code && $code >= 300 && $code < 400; }
+sub is_error ($)        { my $code = shift; $code && $code >= 400 && $code < 600; }
+sub is_client_error ($) { my $code = shift; $code && $code >= 400 && $code < 500; }
+sub is_server_error ($) { my $code = shift; $code && $code >= 500 && $code < 600; }
 
 sub is_cacheable_by_default ($) {
-    my $code = _normalize_code(shift);
+    my $code = shift;
     $code && (
         $code == 200       # OK
         || $code == 203    # Non-Authoritative Information
