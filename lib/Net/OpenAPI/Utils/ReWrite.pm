@@ -52,7 +52,7 @@ sub BUILD {
         $self->_rewrite;
     }
     else {
-        $self->_set_rewritten( $self->_add_checksums( $self->new_text ) );
+        $self->_set_rewritten( $self->add_checksums( $self->new_text ) );
     }
 }
 
@@ -69,7 +69,7 @@ sub _rewrite {
         $replacement = $self->_extract_body;
     }
 
-    my $body = trim( $self->_add_checksums($replacement) );
+    my $body = trim( $self->add_checksums($replacement) );
     my ( $before, $after ) = $self->_extract_before_and_after;
     $self->_set_rewritten("$before$body$after");
 }
@@ -149,17 +149,26 @@ sub _regex_to_match_rewritten_document {
 }
 
 sub _get_checksum {
-    my ( $self, $text ) = @_;
+    my ( $class, $text ) = @_;
     return md5_hex( trim($text) );
 }
 
-sub _add_checksums {
-    my ( $self, $text ) = @_;
-	$text = trim($text);
-    my $checksum = $self->_get_checksum($text);
+=head2 C<add_checksums>
 
-    my $start = sprintf $self->_start_marker_format => $checksum;
-    my $end   = sprintf $self->_end_marker_format   => $checksum;
+    my $checksummed_text = Net::OpenAPI::Utils::ReWrite->add_checksums($text);
+
+This is a class method which allows you to add the start and end checksums to
+any arbitrary piece of text.
+
+=cut
+
+sub add_checksums {
+    my ( $class, $text ) = @_;
+	$text = trim($text);
+    my $checksum = $class->_get_checksum($text);
+
+    my $start = sprintf $class->_start_marker_format => $checksum;
+    my $end   = sprintf $class->_end_marker_format   => $checksum;
 
     return <<"END";
 $start

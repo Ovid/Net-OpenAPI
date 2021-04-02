@@ -24,6 +24,19 @@ has _routes => (
     default => sub { {} },
 );
 
+=head2 C<add_routes>
+
+    $self->add_routes(\@routes, $verbose);
+
+Like C<add_route>, but for an entire set of routes.
+
+=cut
+
+sub add_routes {
+    my ( $self, $routes, $verbose ) = @_;
+    $self->add_route($_, $verbose) foreach @$routes;
+}
+
 =head2 C<add_route(\%route, $verbose)>
 
     my $router = Net::OpenAPI::App::Router->new;

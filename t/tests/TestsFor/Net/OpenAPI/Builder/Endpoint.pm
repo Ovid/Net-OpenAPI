@@ -1,4 +1,4 @@
-package TestsFor::Net::OpenAPI::Builder::Method;
+package TestsFor::Net::OpenAPI::Builder::Endpoint;
 
 # vim: textwidth=200
 

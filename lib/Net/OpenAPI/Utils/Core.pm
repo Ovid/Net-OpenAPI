@@ -3,7 +3,6 @@ package Net::OpenAPI::Utils::Core;
 # ABSTRACT: Utilities for munging Net::OpenAPI data
 
 # Be very careful about circular dependencies against this file
-use Net::OpenAPI::Utils::Template::Tiny;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
     Bool
@@ -19,6 +18,7 @@ use Text::Unidecode 'unidecode';
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
+  get_path_and_filename
   get_path_prefix
   resolve_method
   resolve_package
@@ -27,6 +27,34 @@ our @EXPORT_OK = qw(
   trim
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+
+=head2 C<get_path_and_filename($dir, $package_name)>
+
+    my ($full_path, $filename) = get_path_and_filename($target_dir, $package_name);
+
+Gets the full path and filename of a package, given the target directory it
+will be written to. Usually used with C<write_file> of
+L<Net::OpenAPI::Utils::File>.
+
+=cut
+
+sub get_path_and_filename {
+    my ( $dir, $package_name ) = @_;
+
+    my ( $base, $filename );
+    if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
+        $base     = $+{path};
+        $filename = $+{file};
+        $base =~ s{::}{/}g;
+    }
+    else {
+        croak("Bad package name: $package_name");
+    }
+
+    $filename .= ".pm";
+    my $path = "$dir/lib/$base";
+    return ( $path, $filename );
+}
 
 =head1 FUNCTIONS
 

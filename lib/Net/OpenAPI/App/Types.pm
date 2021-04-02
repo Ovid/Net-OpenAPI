@@ -9,6 +9,7 @@ use Type::Library
   -declare => qw(
   Directory
   HTTPMethod
+  HTTPStatusCode
   MethodName
   OpenAPIPath
   PackageName
@@ -50,8 +51,11 @@ declare PackageName, as Str,
 declare OpenAPIPath, as Str,
   where { m< / \w+ (?: / (?: \w+ | \{ \w+ \} ) )* /? >x };
 
+declare HTTPStatusCode, as PositiveInt,
+  where { $_ >= 100 && $_ < 600 };
+
 # there are more, but these should be the only ones OpenAPI worries about?
-declare HTTPMethod, as Enum [qw/get put post delete patch/];
+declare HTTPMethod, as Enum [qw/get put post delete patch GET PUT POST DELETE PATCH/];
 
 1;
 
@@ -102,11 +106,20 @@ Matches valid method names.
 
 =head2 C<HTTPMethod>
 
-Valid HTTP methods for OpenAPI.
+Valid HTTP methods for OpenAPI. May be lower or upper-case, but not mixed. In
+other words, C<get> or C<GET>, but not C<Get>.
+
+=head2 C<HTTPStatusCode>
+
+Valid HTTP status code. It must be between 100 and 599, inclusive.
+
+Note that this allows some codes which are not assigned. This is considered a
+feature in case these codes are assigned in the future.
 
 =head2 C<Directory>
 
-Valid directory name. Generally must be C<\w+> separated by C</>. A single leading dot is permitted.
+Valid directory name. Generally must be C<\w+> separated by C</>. A single
+leading dot is permitted.
 
 =head2 C<OpenAPIPath>
 

@@ -1,4 +1,4 @@
-package Net::OpenAPI::Builder::Method;
+package Net::OpenAPI::Builder::Endpoint;
 
 use Moo;
 use Data::Dumper;
@@ -73,7 +73,14 @@ sub to_string {
     my $self = shift;
     return template(
         'method',
-        { map { $_ => $self->$_ } qw/request_params response_params path http_method description/ }
+        {
+            request_params  => $self->request_params,
+            response_params => $self->response_params,
+            path            => $self->path,
+            http_method     => $self->http_method,
+            description     => $self->description,
+            response_class  => 'Net::OpenAPI::App::Response', # XXX Fixme
+        }
     );
 }
 
