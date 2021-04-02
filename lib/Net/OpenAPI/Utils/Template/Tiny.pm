@@ -30,21 +30,21 @@ my $RIGHT = qr/
 
 # Preparsing run for nesting tags
 my $PREPARSE = qr/
-	$LEFT ( IF | UNLESS | FOREACH ) \s+
+	$LEFT ( IF | UNLESS | FOR(?:EACH)? ) \s+
 		(
 			(?: \S+ \s+ IN \s+ )?
 		\S+ )
 	$RIGHT
 	(?!
 		.*?
-		$LEFT (?: IF | UNLESS | FOREACH ) \b
+		$LEFT (?: IF | UNLESS | FOR(?:EACH)? ) \b
 	)
 	( .*? )
 	(?:
 		$LEFT ELSE $RIGHT
 		(?!
 			.*?
-			$LEFT (?: IF | UNLESS | FOREACH ) \b
+			$LEFT (?: IF | UNLESS | FOR(?:EACH)? ) \b
 		)
 		( .+? )
 	)?
@@ -259,14 +259,6 @@ Net::OpenAPI::Utils::Template::Processor - Local fork of Template Tiny
 
 =head1 DESCRIPTION
 
-This code behaves like L<Template::Tiny>, but if any variables passed to a
-template are undefined, the code will C<croak()> with an error after the
-template has finished processing. The C<name> passed to the constructor will
-be used in error messages.
-
-The code will also C<croak> if any variables are passed to C<process> but not
-used in the template.
-
 B<Template::Tiny> is a reimplementation of a subset of the functionality from
 L<Template> Toolkit in as few lines of code as possible.
 
@@ -281,6 +273,25 @@ transparently upgraded to full Template Toolkit.
 Unlike Template Toolkit, B<Template::Tiny> will process templates without a
 compile phase (but despite this is still quicker, owing to heavy use of
 the Perl regular expression engine.
+
+=head2 Differences from Template::Tiny
+
+=head3 Undefined is fatal
+
+This code behaves like L<Template::Tiny>, but if any variables passed to a
+template are undefined, the code will C<croak()> with an error after the
+template has finished processing. The C<name> passed to the constructor will
+be used in error messages.
+
+=head3 Extra variables are fatal
+
+The code will also C<croak> if any variables are passed to C<process> but not
+used in the template.
+
+=head3 FOR is a synonym for FOREACH
+
+I keep writing things like C<[% FOR var IN list %]> and this code dies when C<var> is
+undefined. That's because C<Template::Tiny> didn't recognize C<FOR>. Now it does.
 
 =head2 SUPPORTED USAGE
 
