@@ -2,11 +2,14 @@ package Net::OpenAPI::Utils::Template;
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Template::Tiny;
+use Net::OpenAPI::Utils::ReWrite;
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
   template
 );
+use Const::Fast;
+const my $REWRITE_BOUNDARY => '###« REWRITE BOUNDARY »###';
 
 sub template {
     my ( $template_name, $arg_for ) = @_;
@@ -16,6 +19,14 @@ sub template {
     # Generate template results into a variable
     my $output = '';
     $template->process( \$input, $arg_for, \$output );
+    my @chunks = split /$REWRITE_BOUNDARY/ => $output;
+    if ( @chunks > 1 ) {
+       unless (@chunks == 3) {
+           croak("Exactly two or zero rewrite boundaries allowed per template");
+        }
+        $chunks[1] = Net::OpenAPI::Utils::ReWrite->add_checksums($chunks[1]);
+        $output = join '' => @chunks;
+    }
     return $output;
 }
 
@@ -25,9 +36,25 @@ sub _get_template {
         controller => \&_controller_template,
         model      => \&_model_template,
         method     => \&_method_template,
+        example    => \&_example_template,
     );
     my $code = $template{$requested} or croak("No such template for '$requested'");
     return $code->();
+}
+
+sub _example_template {
+    # this is used for tests
+    return <<"END";
+Foo: [% foo %]
+
+$REWRITE_BOUNDARY
+
+Bar: [% bar %]
+
+$REWRITE_BOUNDARY
+
+Baz: [% baz %]
+END
 }
 
 sub _controller_template {
@@ -112,6 +139,18 @@ endpoint '[% http_method %] [% path %]' => sub {
     my ($request, $params) = @_;
     throw( NotImplemented => "[% http_method %] [% path %]" );
 };
+END
+}
+
+sub _app_template {
+    return <<'END';
+package [% package %]
+
+use strict;
+use warnings;
+
+[% FOR controller IN controllers %]
+
 END
 }
 
