@@ -3,7 +3,7 @@ package Net::OpenAPI::Builder::Package;
 use Moo;
 
 use Net::OpenAPI::Policy;
-use Net::OpenAPI::Builder::Method;
+use Net::OpenAPI::Builder::Endpoint;
 use Net::OpenAPI::Utils::ReWrite;
 use Net::OpenAPI::Utils::Core qw(resolve_method resolve_package tidy_code);
 use Net::OpenAPI::Utils::Template qw(template);
@@ -23,8 +23,8 @@ use Net::OpenAPI::App::Types qw(
 );
 
 has controller_name => (
-    is       => 'lazy',
-    isa      => PackageName,
+    is      => 'lazy',
+    isa     => PackageName,
     builder => sub {
         my $self = shift;
         return join '::' => $self->base, 'Controller', $self->root;
@@ -32,8 +32,8 @@ has controller_name => (
 );
 
 has model_name => (
-    is       => 'lazy',
-    isa      => PackageName,
+    is      => 'lazy',
+    isa     => PackageName,
     builder => sub {
         my $self = shift;
         return join '::' => $self->base, 'Model', $self->root;
@@ -54,12 +54,12 @@ has root => (
 
 has methods => (
     is       => 'ro',
-    isa      => HashRef [ InstanceOf ['Net::OpenAPI::Builder::Method'] ],
+    isa      => HashRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ],
     default  => sub { {} },
     init_arg => undef,
 );
 
-sub get_methods { return [ values %{ $_[0]->methods } ] }
+sub get_endpoints { return [ values %{ $_[0]->methods } ] }
 
 sub add_method {
     my $self = shift;
@@ -67,9 +67,9 @@ sub add_method {
         http_method => HTTPMethod,
         path        => NonEmptyStr,
         description => NonEmptyStr,
-        parameters  => Dict[
-            request => Undef | ArrayRef[HashRef],
-            response => Undef | ArrayRef[HashRef],
+        parameters  => Dict [
+            request  => Undef | ArrayRef [HashRef],
+            response => Undef | ArrayRef [HashRef],
         ],
     );
     my $arg_for = $check->(@_);
@@ -84,7 +84,7 @@ sub add_method {
         my $root = $self->root;
         croak("Cannot re-add action '$arg_for->{http_method} $arg_for->{path}' to ($base $root)");
     }
-    my $method = Net::OpenAPI::Builder::Method->new(
+    my $method = Net::OpenAPI::Builder::Endpoint->new(
         package     => $self,
         name        => $method_name,
         path        => $arg_for->{path},
@@ -135,7 +135,7 @@ sub _get_controller_code {
     # the sort keeps the auto-generated code deterministic. We put short paths
     # first just because it's easier to read, but we break ties by sorting on
     # the guaranteed unique names
-    my @methods = sort { length( $a->path ) <=> length( $b->path ) || $a->name cmp $b->name } @{ $self->get_methods };
+    my @methods = sort { length( $a->path ) <=> length( $b->path ) || $a->name cmp $b->name } @{ $self->get_endpoints };
     foreach my $method (@methods) {
         my $http_method = $method->http_method;
         my $path        = $method->path;
@@ -175,9 +175,9 @@ END
     my $model_code = template(
         'model',
         {
-            name        => $model_name,
-            get_methods => $self->get_methods,
-            reserved    => tidy_code($code),
+            name          => $model_name,
+            get_endpoints => $self->get_endpoints,
+            reserved      => tidy_code($code),
         }
     );
 

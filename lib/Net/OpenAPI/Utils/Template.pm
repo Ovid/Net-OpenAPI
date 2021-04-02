@@ -164,7 +164,7 @@ END
         'model',
         {
             name        => $model_name,
-            get_methods => $self->get_methods,
+            get_endpoints => $self->get_endpoints,
             reserved    => tidy_code($code),
         }
     );
@@ -190,7 +190,7 @@ $REWRITE_BOUNDARY
 [% name %]
 
 =head1 METHODS
-[% FOREACH method IN get_methods %]
+[% FOREACH method IN get_endpoints %]
 [% method.to_string %]
 [% END %]
 
@@ -291,12 +291,3 @@ END
 }
 
 1;
-
-__END__
-=head1 TEMPLATES
-
-The following templates are supplied.
-        app        => \&_app_template,
-        controller => \&_controller_template,
-        model      => \&_model_template,
-        method     => \&_method_template,

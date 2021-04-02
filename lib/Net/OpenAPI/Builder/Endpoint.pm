@@ -1,4 +1,4 @@
-package Net::OpenAPI::Builder::Method;
+package Net::OpenAPI::Builder::Endpoint;
 
 use Moo;
 use Data::Dumper;

@@ -31,9 +31,6 @@ sub test_serialization {
         body   => $body,
     ), 'We should be able to create a response object';
     eq_or_diff decode_json($response->to_json), $body, '... and our JSON should serialize correct';
-
-    $DB::single = 1;
-    explain $response->to_xml;
 }
 
 1;
