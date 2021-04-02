@@ -5,7 +5,12 @@ use Moo;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Endpoint;
 use Net::OpenAPI::Utils::ReWrite;
-use Net::OpenAPI::Utils::Core qw(resolve_method resolve_package tidy_code);
+use Net::OpenAPI::Utils::Core qw(
+  get_path_and_filename
+  resolve_method 
+  resolve_package
+  tidy_code
+);
 use Net::OpenAPI::Utils::Template qw(template);
 use Net::OpenAPI::Utils::File qw(write_file);
 use Net::OpenAPI::App::Types qw(
@@ -110,7 +115,6 @@ sub _write_controller {
         path     => $path,
         file     => $filename,
         document => tidy_code($code),
-        rewrite  => 1,
     );
 }
 
@@ -150,7 +154,7 @@ $code
     );
 }
 END
-    my ( $path, $filename ) = $self->_get_path_and_file( $dir, $controller );
+    my ( $path, $filename ) = get_path_and_filename( $dir, $controller );
     my $controller_code = template(
         'controller',
         {
@@ -166,7 +170,7 @@ END
 sub _get_model_code {
     my ( $self, $dir ) = @_;
     my $model_name = $self->model_name;
-    my ( $path, $filename ) = $self->_get_path_and_file( $dir, $model_name );
+    my ( $path, $filename ) = get_path_and_filename( $dir, $model_name );
 
     my $code = <<'END';
 # This space is reserved for future code.
@@ -182,24 +186,6 @@ END
     );
 
     return ( $model_code, $path, $filename );
-}
-
-sub _get_path_and_file {
-    my ( $self, $dir, $package_name ) = @_;
-
-    my ( $base, $filename );
-    if ( $package_name =~ /^(?<path>.*::)(?<file>.*)$/ ) {
-        $base     = $+{path};
-        $filename = $+{file};
-        $base =~ s{::}{/}g;
-    }
-    else {
-        croak("Bad package name: $package_name");
-    }
-
-    $filename .= ".pm";
-    my $path = "$dir/lib/$base";
-    return ( $path, $filename );
 }
 
 sub _has_method {

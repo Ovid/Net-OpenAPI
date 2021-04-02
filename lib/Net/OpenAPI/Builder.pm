@@ -9,9 +9,13 @@ use JSON::Validator::Schema::OpenAPIv3;
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Package;
+use Net::OpenAPI::Utils::Template qw(write_template);
+use Net::OpenAPI::Utils::File qw(write_file);
 
 use Net::OpenAPI::Utils::Core qw(
+  get_path_and_filename
   resolve_root
+  tidy_code
 );
 use Net::OpenAPI::App::Types qw(
   Directory
@@ -73,6 +77,7 @@ sub write {
 
     my $routes = $schema->routes;
     my $base   = $self->base;
+    my (%controllers, %models);
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
@@ -80,6 +85,8 @@ sub write {
             my $path        = $route->{path};
             my $root        = resolve_root($path);
             my $package     = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
+            $controllers{ $package->controller_name } = 1;
+            $models{ $package->model_name }           = 1;
 
             my $description
               = $schema->get(  [ "paths", $path, $http_method, "description" ] )
@@ -97,6 +104,20 @@ sub write {
                 },
             );
         }
+    );
+    my $app = $self->base.'::App';
+    my ( $path, $filename ) = get_path_and_filename( $self->dir, $app );
+    my $app_code = write_template(
+        path          => $path,
+        file          => $filename,
+        tidy          => 1,
+        template_name => 'app',
+        template_data => {
+            package     => $app,
+            models      => [ sort keys %models ],
+            controllers => [ sort keys %controllers ],
+            base        => $self->base,
+        },
     );
     $_->write( $self->dir ) foreach $self->_get_packages;
     $self->_write_driver;

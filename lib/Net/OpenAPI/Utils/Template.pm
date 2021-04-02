@@ -1,5 +1,7 @@
 package Net::OpenAPI::Utils::Template;
 
+# ABSTRACT: Code templates for Net::OpenAPI. Internal use only
+
 =head1 WARNING
 
 Don't just C<perldoc Net::OpenAPI::Utils::Template>. This module contains
@@ -8,15 +10,25 @@ show some very messed up POD. Use the source, Luke.
 
 =cut
 
-# ABSTRACT: Code templates for Net::OpenAPI. Internal use only
-
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Template::Tiny;
 use Net::OpenAPI::Utils::ReWrite;
+use Net::OpenAPI::App::Types qw(
+  compile_named
+  NonEmptyStr
+  HashRef
+  Directory
+  Bool
+);
+use Net::OpenAPI::Utils::Core qw(
+  tidy_code
+);
+use Net::OpenAPI::Utils::File qw(write_file);
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
   template
+  write_template
 );
 use Const::Fast;
 const my $REWRITE_BOUNDARY => '###« REWRITE BOUNDARY »###';
@@ -31,18 +43,41 @@ sub template {
     $template->process( \$input, $arg_for, \$output );
     my @chunks = split /$REWRITE_BOUNDARY/ => $output;
     if ( @chunks > 1 ) {
-       unless (@chunks == 3) {
-           croak("Exactly two or zero rewrite boundaries allowed per template");
+        unless ( @chunks == 3 ) {
+            croak("Exactly two or zero rewrite boundaries allowed per template");
         }
-        $chunks[1] = Net::OpenAPI::Utils::ReWrite->add_checksums($chunks[1]);
+        $chunks[1] = Net::OpenAPI::Utils::ReWrite->add_checksums( $chunks[1] );
         $output = join '' => @chunks;
     }
     return $output;
 }
 
+sub write_template {
+    state $check = compile_named(
+        template_name => NonEmptyStr,
+        template_data => HashRef,
+        path          => Directory,
+        file          => NonEmptyStr,
+        tidy          => Bool,
+    );
+    my $arg_for = $check->(@_);
+    my $result  = template(
+        $arg_for->{template_name},
+        $arg_for->{template_data},
+    );
+    if ( $arg_for->{tidy} ) {
+        tidy_code($result);
+    }
+    write_file(
+        path     => $arg_for->{path},
+        file     => $arg_for->{file},
+        document => $result,
+    );
+}
+
 sub _get_template {
     my $requested = shift;
-    my %template = (
+    my %template  = (
         app        => \&_app_template,
         controller => \&_controller_template,
         model      => \&_model_template,
@@ -91,6 +126,7 @@ Requires three variables, all of which should be strings. C<foo>, C<bar>, C<baz>
 =cut
 
 sub _example_template {
+
     # this is used for tests
     return <<"END";
 Foo: [% foo %]
@@ -287,6 +323,15 @@ __END__
 
     my \$router = Net::OpenAPI::App::Router->new;
     \$router->add_routes([% package %]->routes)
+
+=head1 METHODS
+
+=head2 C<routes>
+
+    my \$routes = [% package %]->routes;
+
+Class method. Returns an array reference of routes you can pass to
+C<&Net::OpenAPI::App::Router::add_routes>.
 END
 }
 
