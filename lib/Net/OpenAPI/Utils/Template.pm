@@ -82,6 +82,7 @@ sub _get_template {
         controller => \&_controller_template,
         model      => \&_model_template,
         method     => \&_method_template,
+        psgi       => \&_psgi_template,
         example    => \&_example_template,
     );
     my $code = $template{$requested} or croak("No such template for '$requested'");
@@ -287,25 +288,78 @@ END
 =cut
 
 sub _app_template {
-    return <<"END";
-package [% package %]
+    my $before = <<"END";
+package [% package %];
 
+$REWRITE_BOUNDARY
+END
+
+    my $do_not_touch = <<'END';
 use v5.16.0;
 use strict;
 use warnings;
+use Scalar::Util 'blessed';
+use Mojo::JSON qw(encode_json);
+use Plack::Request;
+use Net::OpenAPI::App::Router;
 
-$REWRITE_BOUNDARY
 [% FOREACH controller IN controllers %]use [% controller %];
 [% END %]
 [% FOR model IN models %]use [% model %];
 [% END %]
-sub routes {
-    state \$routes = [];
-    unless (\@\$routes) {
-[% FOREACH controller IN controllers %]        push \@\$routes => [% controller %]->routes;
+my $router = Net::OpenAPI::App::Router->new;
+$router->add_routes(_routes());
+
+sub _routes {
+    state $routes = [];
+    unless (@$routes) {
+[% FOREACH controller IN controllers %]        push @$routes => [% controller %]->routes;
 [% END %]    }
-    return \$routes;
+    return $routes;
 }
+
+sub get_app {
+    return sub {
+        my $req   = Plack::Request->new(shift);
+        my $match = $router->match($req)
+          or return $req->new_response(404)->finalize;
+
+        my $dispatcher = $match->{dispatch};
+        my $res        = $req->new_response(200);
+        $res->content_type('application/json');
+        my $result;
+        if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
+            $res->body( encode_json($result) );
+            $res->finalize;
+        }
+        else {
+            my $error = $@;
+            my $res;
+            if ( blessed $error && $error->isa('Net::OpenAPI::Exceptions::Base') ) {
+                $res = $req->new_response( $error->status_code );
+                if ( my $info = $error->info ) {
+                    $res->content_type('application/json');
+                    $res->body(
+                        encode_json(
+                            {
+                                info    => $info,
+                                code    => $error->status_code,
+                                message => $error->message,
+                            }
+                        )
+                    );
+                }
+            }
+            else {
+                $res = $req->new_response(500);
+            }
+            $res->finalize;
+        }
+    };
+}
+END
+
+    my $after = <<"END";
 $REWRITE_BOUNDARY
 
 1;
@@ -332,6 +386,20 @@ __END__
 
 Class method. Returns an array reference of routes you can pass to
 C<&Net::OpenAPI::App::Router::add_routes>.
+END
+    return join "\n" => $before, $do_not_touch, $after;
+}
+
+sub _psgi_template {
+    return <<'END';
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib '../lib'; # XXX fix me (load Net::OpenAPI::*)
+
+use [% app %];
+[% app %]->get_app;
 END
 }
 
