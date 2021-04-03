@@ -271,7 +271,7 @@ endpoint '[% http_method %] [% path %]' => sub {
     my ($request, $params) = @_;
     return [% response_class %]->new(
        status_code => HTTPNotImplemented,
-       body        => { info => '[% http_method %] [% path %]' },
+       body        => { error => 'Not Implemented', code => HTTPNotImplemented, info => '[% http_method %] [% path %]' },
     );
 };
 END
@@ -306,6 +306,7 @@ use Scalar::Util 'blessed';
 use Mojo::JSON qw(encode_json);
 use Plack::Request;
 use Net::OpenAPI::App::Router;
+use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPInternalServerError);
 
 [% FOREACH controller IN controllers %]use [% controller %];
 [% END %]
@@ -333,17 +334,29 @@ sub get_app {
         $res->content_type('application/json');
         my $result;
         if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
+
             if ( blessed $result && $result->isa('Net::OpenAPI::App::Response') ) {
+
+                # they've returned a response object. Use it.
                 $res = $req->new_response( $result->status_code );
                 if ( my $body = $result->body ) {
                     $res->content_type('application/json');
                     $res->body( encode_json($body) );
                 }
             }
-            else {
-                $res = $req->new_response(500);
+            elsif ( ref $result ) {
+
+                # they've returned a raw data structure as a shortcut. Use it.
+                $res = $req->new_response(HTTPOK);
+                $res->content_type('application/json');
+                $res->body( encode_json($result) );
             }
             $res->finalize;
+        }
+        else {
+            # XXX eval failed. Need more info here.
+            warn $@;
+            $res = $req->new_response(HTTPInternalServerError);
         }
     };
 }
