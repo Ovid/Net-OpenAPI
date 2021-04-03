@@ -11,9 +11,9 @@ GetOptions(
 ) or die "Bad Options";
 
 my $builder = Net::OpenAPI::Builder->new(
-    schema => $schema,
-    base   => $base,
-    dir    => $directory,
+    schema_file => $schema,
+    base        => $base,
+    dir         => $directory,
 );
 $builder->write;
 

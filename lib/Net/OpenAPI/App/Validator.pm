@@ -6,32 +6,29 @@ use Moo;
 use Storable 'dclone';
 use Scalar::Util 'blessed';
 use Net::OpenAPI::Policy;
-use Net::OpenAPI::Utils::File qw(slurp);
 use Net::OpenAPI::App::Types qw(
   HashRef
   InstanceOf
   NonEmptyStr
 );
 
-use Mojo::JSON qw(decode_json);
 use JSON::Validator::Schema::OpenAPIv3;
 use namespace::autoclean;
+
+has raw_schema => (
+    is       => 'ro',
+    isa      => HashRef,
+    required => 1,
+);
 
 has _validator => (
     is      => 'lazy',
     isa     => InstanceOf ['JSON::Validator::Schema::OpenAPIv3'],
     builder => sub {
         my $self = shift;
-        return JSON::Validator::Schema::OpenAPIv3->new( decode_json( slurp( $self->_schema ) ) );
+        return JSON::Validator::Schema::OpenAPIv3->new( $self->raw_schema );
     },
     handles => ['schema'],
-);
-
-has _schema => (
-    is       => 'ro',
-    isa      => NonEmptyStr,
-    required => 1,
-    init_arg => 'schema',
 );
 
 has _schema_as_perl => (
@@ -76,9 +73,9 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_request {
-    my ($self, $method, $path ) = @_;
-    my $params = $self->_validator->parameters_for_request($method, $path) or return;
-    my $resolver  = $self->_resolution_method($params);
+    my ( $self, $method, $path ) = @_;
+    my $params   = $self->_validator->parameters_for_request( $method, $path ) or return;
+    my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
 
@@ -92,9 +89,9 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_response {
-    my ($self, $method, $path ) = @_;
-    my $params = $self->_validator->parameters_for_response($method, $path) or return;
-    my $resolver  = $self->_resolution_method($params);
+    my ( $self, $method, $path ) = @_;
+    my $params   = $self->_validator->parameters_for_response( $method, $path ) or return;
+    my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
 

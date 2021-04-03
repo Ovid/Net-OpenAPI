@@ -4,11 +4,12 @@ package Net::OpenAPI::Builder;
 
 use Moo;
 use Mojo::File qw(path);
+use Mojo::JSON qw(decode_json);
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Package;
 use Net::OpenAPI::Utils::Template qw(template write_template);
-use Net::OpenAPI::Utils::File qw(write_file);
+use Net::OpenAPI::Utils::File qw(slurp write_file);
 use Net::OpenAPI::App::Validator;
 
 use Net::OpenAPI::Utils::Core qw(
@@ -25,17 +26,59 @@ use Net::OpenAPI::App::Types qw(
 );
 use namespace::autoclean;
 
+=head1 PARAMETERS
+
+=head2 base
+
+Base package name for generated code
+
+=cut
+
 has base => (
     is       => 'ro',
     isa      => PackageName,
     required => 1,
 );
 
-has _schema => (
+=head2 schema
+
+Filename for OpenAPI schema
+
+=cut
+
+has schema_file => (
     is       => 'ro',
     isa      => NonEmptyStr,
     required => 1,
-    init_arg => 'schema',
+);
+
+=head2 dir
+
+Directory for generated code
+
+=cut
+
+has dir => (
+    is       => 'ro',
+    isa      => Directory,
+    required => 1,
+);
+
+=head1 ATTRIBUTES
+
+=head2 raw_schema
+
+Unvalidated schema, as read from L</schema_file>
+
+=cut
+
+has raw_schema => (
+    is      => 'lazy',
+    isa     => HashRef,
+    builder => sub {
+        my $self = shift;
+        return decode_json( slurp( $self->schema_file ) );
+    },
 );
 
 has _validator => (
@@ -43,14 +86,8 @@ has _validator => (
     isa     => InstanceOf ['Net::OpenAPI::App::Validator'],
     builder => sub {
         my $self = shift;
-        return Net::OpenAPI::App::Validator->new( schema => $self->_schema );
+        return Net::OpenAPI::App::Validator->new( raw_schema => $self->raw_schema );
     },
-);
-
-has dir => (
-    is       => 'ro',
-    isa      => Directory,
-    required => 1,
 );
 
 has packages => (
@@ -75,7 +112,7 @@ sub write {
 
     my $routes = $schema->routes;
     my $base   = $self->base;
-    my (%controllers, %models);
+    my ( %controllers, %models );
     $routes->each(
         sub {
             my ( $route, $num ) = @_;
@@ -103,7 +140,7 @@ sub write {
             );
         }
     );
-    my $app = $self->base.'::App';
+    my $app = $self->base . '::App';
     my ( $path, $filename ) = get_path_and_filename( $self->dir, $app );
     my $app_code = write_template(
         path          => $path,
