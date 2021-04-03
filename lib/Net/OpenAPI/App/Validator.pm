@@ -82,7 +82,8 @@ sub _resolve_href {
     return $href;
 }
 
-sub _resolve_openapi_ref {
+sub _resolve_json_ref {
+    # See also: https://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
     my ( $self, $ref ) = @_;
 
     # XXX Jan Henning has mentioned in email to me that he's thinking about
@@ -117,7 +118,7 @@ sub _resolution_method {
     if ( 'HASH' eq ref $value && 1 == keys %$value ) {
         my ($key) = keys %$value;
         if ( '$ref' eq $key ) {
-            return '_resolve_openapi_ref';
+            return '_resolve_json_ref';
         }
     }
     return
