@@ -49,10 +49,7 @@ sub test_serialization {
         'xml'      => { 'name' => 'pet' }
     };
     eq_or_diff $validator->get_component( 'components', 'schemas', 'Pet' ),
-      $expected,
-      'We should be aable to full resolve a component';
+      $expected, 'We should be able to full resolve a component';
 }
 
 __PACKAGE__->meta->make_immutable;
-
-__END__
