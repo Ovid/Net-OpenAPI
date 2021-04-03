@@ -4,13 +4,12 @@ package Net::OpenAPI::Builder;
 
 use Moo;
 use Mojo::File qw(path);
-use Mojo::JSON qw(decode_json encode_json);
-use JSON::Validator::Schema::OpenAPIv3;
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Package;
 use Net::OpenAPI::Utils::Template qw(template write_template);
 use Net::OpenAPI::Utils::File qw(write_file);
+use Net::OpenAPI::App::Validator;
 
 use Net::OpenAPI::Utils::Core qw(
   get_path_and_filename
@@ -41,11 +40,10 @@ has _schema => (
 
 has _validator => (
     is      => 'lazy',
-    isa     => InstanceOf ['JSON::Validator::Schema::OpenAPIv3'],
+    isa     => InstanceOf ['Net::OpenAPI::App::Validator'],
     builder => sub {
         my $self = shift;
-        my $file = Mojo::File->new( $self->_schema );
-        return JSON::Validator::Schema::OpenAPIv3->new( decode_json( $file->slurp ) );
+        return Net::OpenAPI::App::Validator->new( schema => $self->_schema );
     },
 );
 
