@@ -19,6 +19,8 @@ use Net::OpenAPI::App::Types qw(
   HashRef
   Directory
   Bool
+  Optional
+  NonEmptySimpleStr
 );
 use Net::OpenAPI::Utils::Core qw(
   tidy_code
@@ -34,13 +36,23 @@ use Const::Fast;
 const my $REWRITE_BOUNDARY => '###« REWRITE BOUNDARY »###';
 
 sub template {
-    my ( $template_name, $arg_for ) = @_;
-    my $template = Net::OpenAPI::Utils::Template::Tiny->new( name => $template_name );
-    my $input    = _get_template($template_name);
+    state $check = compile_named(
+        name     => NonEmptySimpleStr,
+        template => NonEmptyStr,
+        data     => HashRef,
+        tidy     => Optional [Bool],
+    );
+    my $arg_for = $check->(@_);
+
+    my $template = Net::OpenAPI::Utils::Template::Tiny->new( name => $arg_for->{name} );
 
     # Generate template results into a variable
     my $output = '';
-    $template->process( \$input, $arg_for, \$output );
+    $template->process(
+        \$arg_for->{template},
+        { %{ $arg_for->{data} }, REWRITE_BOUNDARY => $REWRITE_BOUNDARY },
+        \$output
+    );
     my @chunks = split /$REWRITE_BOUNDARY/ => $output;
     if ( @chunks > 1 ) {
         unless ( @chunks == 3 ) {
@@ -49,6 +61,11 @@ sub template {
         $chunks[1] = Net::OpenAPI::Utils::ReWrite->add_checksums( $chunks[1] );
         $output = join '' => @chunks;
     }
+
+    if ( $arg_for->{tidy} ) {
+        tidy_code($output);
+    }
+
     return $output;
 }
 

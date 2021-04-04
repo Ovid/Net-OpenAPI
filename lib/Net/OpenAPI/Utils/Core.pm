@@ -5,12 +5,12 @@ package Net::OpenAPI::Utils::Core;
 # Be very careful about circular dependencies against this file
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
-    Bool
-    Dict
-    Directory
-    NonEmptyStr
-    Optional
-    compile_named
+  Bool
+  Dict
+  Directory
+  NonEmptyStr
+  Optional
+  compile_named
 );
 
 use Perl::Tidy 'perltidy';
@@ -20,6 +20,7 @@ use base 'Exporter';
 our @EXPORT_OK = qw(
   get_path_and_filename
   get_path_prefix
+  normalize_string
   resolve_method
   resolve_package
   resolve_root
@@ -109,7 +110,7 @@ all non-word characters removed. Frequently used to create package names.
 sub resolve_root {
     my $path = shift;
     my ( $root, undef ) = grep {/\S/} split m{/} => $path;
-    return ucfirst _normalize_string($root);
+    return ucfirst normalize_string($root);
 }
 
 =head2 C<resolve_method($package_base, $http_method, $path)>
@@ -165,7 +166,7 @@ sub get_path_prefix {
     if ( $prefix =~ /^{/ ) {
         croak("Prefix must not be a path variable: $prefix");
     }
-    return ucfirst _normalize_string($prefix);
+    return ucfirst normalize_string($prefix);
 }
 
 =head2 C<tidy_code($code)>
@@ -194,7 +195,7 @@ sub tidy_code {
     return $tidied;
 }
 
-sub _normalize_string {
+sub normalize_string {
     my $string = shift;
     $string = unidecode($string);
     $string =~ s/\W//g;

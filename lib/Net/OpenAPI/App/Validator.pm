@@ -74,7 +74,7 @@ but we fully expand C<$ref>s and booleans.
 
 sub parameters_for_request {
     my ( $self, $method, $path ) = @_;
-    my $params   = $self->_validator->parameters_for_request( $method, $path ) or return;
+    my $params   = $self->_validator->parameters_for_request( [ $method, $path ] ) or return;
     my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
@@ -90,7 +90,7 @@ but we fully expand C<$ref>s and booleans.
 
 sub parameters_for_response {
     my ( $self, $method, $path ) = @_;
-    my $params   = $self->_validator->parameters_for_response( $method, $path ) or return;
+    my $params   = $self->_validator->parameters_for_response( [ $method, $path ] ) or return;
     my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }

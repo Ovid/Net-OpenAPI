@@ -112,11 +112,6 @@ sub process {
             push @unused => $var;
         }
     }
-    if (@unused) {
-        my $unused = join ', ' => @unused;
-        my $name   = $self->{name};
-        croak("The following variables were passed to the '$name' template but not used: $unused");
-    }
 
     if (@_) {
         ${ $_[0] } = $result;

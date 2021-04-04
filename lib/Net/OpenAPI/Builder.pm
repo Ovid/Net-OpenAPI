@@ -7,7 +7,8 @@ use Mojo::File qw(path);
 use Mojo::JSON qw(decode_json);
 
 use Net::OpenAPI::Policy;
-use Net::OpenAPI::Builder::Package;
+use Net::OpenAPI::Builder::Controller;
+use Net::OpenAPI::Builder::Endpoint;
 use Net::OpenAPI::Utils::Template qw(template write_template);
 use Net::OpenAPI::Utils::File qw(slurp write_file);
 use Net::OpenAPI::App::Validator;
@@ -18,6 +19,7 @@ use Net::OpenAPI::Utils::Core qw(
   tidy_code
 );
 use Net::OpenAPI::App::Types qw(
+  ArrayRef
   Directory
   HashRef
   InstanceOf
@@ -40,7 +42,7 @@ has base => (
     required => 1,
 );
 
-=head2 schema
+=head2 schema_file
 
 Filename for OpenAPI schema
 
@@ -66,6 +68,21 @@ has dir => (
 
 =head1 ATTRIBUTES
 
+=head2 app
+
+Package name for generated App
+
+=cut
+
+has app => (
+    is      => 'lazy',
+    isa     => PackageName,
+    builder => sub {
+        my $self = shift;
+        return $self->base . '::App';
+    },
+);
+
 =head2 raw_schema
 
 Unvalidated schema, as read from L</schema_file>
@@ -89,7 +106,7 @@ NOTE: Currently, request/response validation requires a full C<validator> instan
 so generated application includes a copy of L</schema_file> and re-generates the
 C<validator> on startup.
 
-=head1 errors
+=head1 schema_errors
 
 Delegated to L</validator>
 
@@ -102,97 +119,340 @@ has validator => (
         my $self = shift;
         return Net::OpenAPI::App::Validator->new( raw_schema => $self->raw_schema );
     },
-    handles => ['errors'],
+    handles => { schema => 'schema', schema_errors => 'errors' },
+);
+
+=head1 routes
+
+All routes defined by L</schema>, as L</Net::OpenAPI::Builder::Endpoint> instances
+
+=cut
+
+has routes => (
+    is      => 'lazy',
+    isa     => ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ],
+    builder => sub {
+        my $self = shift;
+        return [ map { Net::OpenAPI::Builder::Endpoint->new( validator => $self->validator, route => $_ ) } @{ $self->schema->routes } ];
+    },
+);
+
+=head2 routes_by_controller
+
+All L</routes> grouped by target Controller.
+
+POLICY: L<Net::OpenAPI::Builder::Endpoint/controller_package> determines the
+Controller for each route.
+
+=cut
+
+has routes_by_controller => (
+    is      => 'lazy',
+    isa     => HashRef [ ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ] ],
+    builder => sub {
+        my $self = shift;
+        my %routes_by_controller;
+        for my $route ( @{ $self->routes } ) {
+            my $controller_name = $route->controller_name;
+            push @{ $routes_by_controller{$controller_name} }, $route;
+        }
+        return \%routes_by_controller;
+    },
+);
+
+=head1 controllers
+
+L<Net::OpenAPI::Builder::Controller> instances for all controllers in L</routes_by_controller>
+
+=cut
+
+has controllers => (
+    is      => 'lazy',
+    isa     => ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Controller'] ],
+    builder => sub {
+        my $self = shift;
+
+        my $routes_by_controller = $self->routes_by_controller;
+        return [
+            map {
+                Net::OpenAPI::Builder::Controller->new(
+                    base   => $self->base,
+                    name   => $_,
+                    routes => $routes_by_controller->{$_}
+                )
+            } keys %$routes_by_controller
+        ];
+    },
+);
+
+has models => (
+    is      => 'lazy',
+    isa     => ArrayRef,
+    builder => sub { [] },
 );
 
 =head1 METHODS
 
-=head2 has_errors
+=head2 validate
 
-Does the schema have any errors?
+Validate the specification. Dies if specification is invalid.
 
 =cut
 
-sub has_errors {
+sub validate {
     my $self = shift;
-    return !!scalar @{ $self->errors };
-}
 
-has packages => (
-    is      => 'ro',
-    isa     => HashRef [ InstanceOf ['Net::OpenAPI::Builder::Package'] ],
-    default => sub { {} },
-);
-
-sub _get_packages {
-    my $self = shift;
-    return values %{ $self->packages };
-}
-
-sub write {
-    my $self   = shift;
-    my $schema = $self->validator->schema;
-
-    if ( my @errors = $schema->errors->@* ) {
-        my $errors = join "\n" => @errors;
-        croak($errors);
+    if ( my @errors = @{ $self->schema_errors } ) {
+        croak "OpenAPI validation errors: " . join "\n" => @errors;
     }
 
-    my $routes = $schema->routes;
-    my $base   = $self->base;
-    my ( %controllers, %models );
-    $routes->each(
-        sub {
-            my ( $route, $num ) = @_;
-            my $http_method = $route->{method};
-            my $path        = $route->{path};
-            my $root        = resolve_root($path);
-            my $package     = $self->packages->{$root} //= Net::OpenAPI::Builder::Package->new( base => $base, root => $root );
-            $controllers{ $package->controller_name } = 1;
-            $models{ $package->model_name }           = 1;
-
-            my $description
-              = $schema->get(  [ "paths", $path, $http_method, "description" ] )
-              || $schema->get( [ "paths", $path, $http_method, "summary" ] )
-              || 'No description found';
-            my $request_parameters  = $self->_validator->parameters_for_request(  [ $http_method, $path ] );
-            my $response_parameters = $self->_validator->parameters_for_response( [ $http_method, $path ] );
-            $package->add_method(
-                http_method => $http_method,
-                path        => $path,
-                description => $description,
-                parameters  => {
-                    request  => $request_parameters,
-                    response => $response_parameters,
-                },
-            );
+    my $controllers = $self->controllers;
+    my %controller_errors;
+    for my $controller (@$controllers) {
+        my $errors = $controller->errors;
+        if (@$errors) {
+            $controller_errors{ $controller->package } = $errors;
         }
+    }
+
+    if (%controller_errors) {
+        my @lines = ('Controller errors:');
+        for my $controller ( sort keys %controller_errors ) {
+            my $errors = $controller_errors{$controller};
+            push @lines, "    $controller:";
+            for my $error (@$errors) {
+                push @lines, "        $error";
+            }
+        }
+        croak join "\n" => @lines;
+    }
+}
+
+=head1 OUTPUT ATTRIBUTES
+
+=head2 code
+
+Code for the main App modules of this application
+
+=cut
+
+has code => (
+    is      => 'lazy',
+    isa     => NonEmptyStr,
+    builder => sub {
+        my $self = shift;
+
+        my $package = $self->app;
+        my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
+
+        my @controllers = sort map { $_->package } @{ $self->controllers };
+        my @models      = sort map { $_->package } @{ $self->models };
+
+        # the sort keeps the auto-generated code deterministic. We put short paths
+        # first just because it's easier to read, but we break ties by sorting on
+        # the guaranteed unique names
+        my @routes = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->routes };
+
+        return template(
+            name     => 'app',
+            template => $self->_app_template,
+            data     => {
+                base        => $self->base,
+                template    => $self->_app_template,
+                package     => $package,
+                models      => \@models,
+                controllers => \@controllers,
+                routes      => \@routes,
+            },
+            tidy => 1,
+        );
+    },
+);
+
+sub _app_template {
+    state $template;
+
+    return $template //= do {
+        ( my $template_content = <<'        EOF' ) =~ s/\n        /\n/gm;
+        package [% package %];
+        
+        [% REWRITE_BOUNDARY %]
+        use v5.16.0;
+        use strict;
+        use warnings;
+        use Scalar::Util 'blessed';
+        use Mojo::JSON qw(encode_json);
+        use Plack::Request;
+        use Net::OpenAPI::App::Router;
+        use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPInternalServerError);
+        
+        [% FOREACH controller IN controllers %]use [% controller %];
+        [% END %]
+        [% FOR model IN models %]use [% model %];
+        [% END %]
+
+        my $routes = [
+            [% FOREACH route IN routes %]
+            { path => '[% route.path %]', http_method => '[% route.http_method %]', controller => '[% route.controller_package %]', method => '[% route.method %]' },
+            [% END %]
+        ];
+
+        my $router = Net::OpenAPI::App::Router->new( routes => $routes );
+        
+        sub get_app {
+            return sub {
+                my $req   = Plack::Request->new(shift);
+                my $match = $router->match($req)
+                  or return $req->new_response(404)->finalize;
+        
+                my $dispatcher = $match->{dispatch};
+                my $res        = $req->new_response(200);
+                $res->content_type('application/json');
+                my $result;
+                if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
+        
+                    if ( blessed $result && $result->isa('Net::OpenAPI::App::Response') ) {
+        
+                        # they've returned a response object. Use it.
+                        $res = $req->new_response( $result->status_code );
+                        if ( my $body = $result->body ) {
+                            $res->content_type('application/json');
+                            $res->body( encode_json($body) );
+                        }
+                    }
+                    elsif ( ref $result ) {
+        
+                        # they've returned a raw data structure as a shortcut. Use it.
+                        $res = $req->new_response(HTTPOK);
+                        $res->content_type('application/json');
+                        $res->body( encode_json($result) );
+                    }
+                    $res->finalize;
+                }
+                else {
+                    # XXX eval failed. Need more info here.
+                    warn $@;
+                    $res = $req->new_response(HTTPInternalServerError);
+                }
+            };
+        }
+
+        [% REWRITE_BOUNDARY %]
+        
+        1;
+        
+        __END__
+        
+        =head1 NAME
+        
+        [% package %] - Application module for [% base %]
+        
+        =head1 SYNOPSIS
+        
+            use [% package %];
+            use Net::OpenAPI::App::Router;
+        
+            my $router = Net::OpenAPI::App::Router->new;
+            $router->add_routes([% package %]->routes)
+        
+        =head1 METHODS
+        
+        =head2 C<routes>
+        
+            my \$routes = [% package %]->routes;
+        
+        Class method. Returns an array reference of routes you can pass to
+        C<&Net::OpenAPI::App::Router::add_routes>.
+        EOF
+
+        $template_content;
+    };
+}
+
+=head1 OUTPUT METHODS
+
+=head2 write
+
+Write the application
+
+=cut
+
+sub write {
+    my $self = shift;
+    $self->validate;
+
+    $self->_write_schema;
+    $self->_write_controllers;
+    $self->_write_models;
+    $self->_write_app;
+    $self->_write_driver;
+}
+
+sub _write_schema {
+    my $self = shift;
+
+    write_file(
+        path     => $self->dir . '/data',
+        file     => 'openapi_schema',
+        document => slurp( $self->schema_file ),
     );
-    my $app = $self->base . '::App';
-    my ( $path, $filename ) = get_path_and_filename( $self->dir, $app );
-    my $app_code = write_template(
-        path          => $path,
-        file          => $filename,
-        tidy          => 1,
-        template_name => 'app',
-        template_data => {
-            package     => $app,
-            models      => [ sort keys %models ],
-            controllers => [ sort keys %controllers ],
-            base        => $self->base,
-        },
-    );
-    $_->write( $self->dir ) foreach $self->_get_packages;
-    $self->_write_driver($app);
+}
+
+sub _write_controllers {
+    my $self = shift;
+
+    for my $controller ( @{ $self->controllers } ) {
+
+        my $package = $controller->package;
+        my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
+
+        write_file(
+            path     => $path,
+            file     => $filename,
+            document => $controller->code,
+        );
+    }
+}
+
+sub _write_models {
+    my $self = shift;
+
+    for my $model ( @{ $self->models } ) {
+
+        my $package = $model->package;
+        my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
+
+        write_file(
+            path     => $path,
+            file     => $filename,
+            document => $model->code,
+        );
+    }
 }
 
 sub _write_driver {
-    my ( $self, $app ) = @_;
-    my $psgi_code = template(
-        'psgi',
-        { app => $app }
+    my $self = shift;
+
+    write_template(
+        path          => $self->dir . "/script",
+        file          => 'app.psgi',
+        template_name => 'psgi',
+        template_data => {
+            app => $self->app,
+        },
     );
-    my $path = path( $self->dir . "/script" )->make_path;
-    $path->make_path->child('app.psgi')->spurt($psgi_code);
 }
+
+sub _write_app {
+    my $self = shift;
+
+    my ( $path, $filename ) = get_path_and_filename( $self->dir, $self->app );
+
+    write_file(
+        path     => $path,
+        file     => $filename,
+        document => $self->code,
+    );
+}
+
 1;
