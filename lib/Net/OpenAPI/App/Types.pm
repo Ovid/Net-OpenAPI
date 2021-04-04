@@ -36,9 +36,10 @@ BEGIN {
     );
 }
 
+# XXX Is Directory broken and useless?
 my $DIR = qr/[-a-zA-Z0-9_]+/;
 declare Directory, as Str,
-  where { m<^ (?: \./? )? $DIR (?:/$DIR)* >x };
+  where { m<^ (?: \./? | /? )? $DIR (?:/$DIR)* >x };
 
 my $IDENTIFIER = qr/(?:[A-Z_a-z][0-9A-Z_a-z]*)/;
 

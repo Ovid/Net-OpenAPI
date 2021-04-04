@@ -90,8 +90,8 @@ sub write {
               = $schema->get(  [ "paths", $path, $http_method, "description" ] )
               || $schema->get( [ "paths", $path, $http_method, "summary" ] )
               || 'No description found';
-            my $request_parameters  = $schema->parameters_for_request(  [ $http_method, $path ] );
-            my $response_parameters = $schema->parameters_for_response( [ $http_method, $path ] );
+            my $request_parameters  = $self->_validator->parameters_for_request(  [ $http_method, $path ] );
+            my $response_parameters = $self->_validator->parameters_for_response( [ $http_method, $path ] );
             $package->add_method(
                 http_method => $http_method,
                 path        => $path,

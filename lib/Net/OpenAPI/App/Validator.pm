@@ -3,6 +3,7 @@ package Net::OpenAPI::App::Validator;
 # ABSTRACT: Net::OpenAPI validation class
 
 use Moo;
+use Storable 'dclone';
 use Scalar::Util 'blessed';
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::File qw(slurp);
@@ -60,9 +61,41 @@ sub get_component {
     # for now, assume hash keys
     my $schema = $self->_schema_as_perl;
     foreach my $key (@path) {
-        $schema = $schema->{$key};
+        $schema = $schema->{$key} or return;
     }
-    return $schema;
+    return dclone($schema);
+}
+
+=head2 C<parameters_for_request( $method, $path )>
+
+    my $params = $validator->parameters_for_request( 'GET', '/path/to/{something}' );
+
+Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_request> method,
+but we fully expand C<$ref>s and booleans.
+
+=cut
+
+sub parameters_for_request {
+    my ($self, $method, $path ) = @_;
+    my $params = $self->_validator->parameters_for_request($method, $path) or return;
+    my $resolver  = $self->_resolution_method($params);
+    return $self->$resolver($params);
+}
+
+=head2 C<parameters_for_response( $method, $path )>
+
+    my $params = $validator->parameters_for_response( 'GET', '/path/to/{something}' );
+
+Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_response> method,
+but we fully expand C<$ref>s and booleans.
+
+=cut
+
+sub parameters_for_response {
+    my ($self, $method, $path ) = @_;
+    my $params = $self->_validator->parameters_for_response($method, $path) or return;
+    my $resolver  = $self->_resolution_method($params);
+    return $self->$resolver($params);
 }
 
 sub _resolve_component {
@@ -83,6 +116,7 @@ sub _resolve_href {
 }
 
 sub _resolve_json_ref {
+
     # See also: https://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
     my ( $self, $ref ) = @_;
 
