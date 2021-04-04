@@ -105,6 +105,19 @@ has validator => (
     handles => ['errors'],
 );
 
+=head1 METHODS
+
+=head2 has_errors
+
+Does the schema have any errors?
+
+=cut
+
+sub has_errors {
+    my $self = shift;
+    return !!scalar @{ $self->errors };
+}
+
 has packages => (
     is      => 'ro',
     isa     => HashRef [ InstanceOf ['Net::OpenAPI::Builder::Package'] ],
