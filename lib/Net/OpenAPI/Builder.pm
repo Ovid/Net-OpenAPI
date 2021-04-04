@@ -81,13 +81,28 @@ has raw_schema => (
     },
 );
 
-has _validator => (
+=head1 validator
+
+Instance of L<JSON::Validator::Schema::OpenAPIv3>
+
+NOTE: Currently, request/response validation requires a full C<validator> instance,
+so generated application includes a copy of L</schema_file> and re-generates the
+C<validator> on startup.
+
+=head1 errors
+
+Delegated to L</validator>
+
+=cut
+
+has validator => (
     is      => 'lazy',
     isa     => InstanceOf ['Net::OpenAPI::App::Validator'],
     builder => sub {
         my $self = shift;
         return Net::OpenAPI::App::Validator->new( raw_schema => $self->raw_schema );
     },
+    handles => ['errors'],
 );
 
 has packages => (
@@ -103,7 +118,7 @@ sub _get_packages {
 
 sub write {
     my $self   = shift;
-    my $schema = $self->_validator->schema;
+    my $schema = $self->validator->schema;
 
     if ( my @errors = $schema->errors->@* ) {
         my $errors = join "\n" => @errors;
