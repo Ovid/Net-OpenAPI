@@ -20,7 +20,7 @@ sub import {
     $rule_for{except} = [ $rule_for{except} ]
       unless 'ARRAY' eq ref $rule_for{except};
 
-    my %skip   = map { $_ => 1 } $rule_for{except}->@*;
+    my %skip   = map { $_ => 1 } @{ $rule_for{except} };
     my $caller = $rule_for{apply_to} // caller;
 
     # this one is mandatory
@@ -33,7 +33,7 @@ sub import {
     Try::Tiny->import::into( $caller, qw(try catch finally) )
       unless $skip{'Try::Tiny'};
     Carp->import::into( $caller, qw(carp croak) ) unless $skip{'Carp'};
-    autodie->import::into( $caller, ':all' )      unless $skip{'autodie'};
+    autodie->import::into( $caller, ':all' ) unless $skip{'autodie'};
 } ## end sub import
 
 sub unimport {
