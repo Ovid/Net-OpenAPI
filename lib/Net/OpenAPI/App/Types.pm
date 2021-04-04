@@ -55,8 +55,8 @@ declare OpenAPIPath, as Str,
 declare HTTPStatusCode, as PositiveInt,
   where { $_ >= 100 && $_ < 600 };
 
-# there are more, but these should be the only ones OpenAPI worries about?
-declare HTTPMethod, as Enum [qw/get put post delete patch GET PUT POST DELETE PATCH/];
+declare HTTPMethod, as Str,
+    where { /^ get | put | post | delete | patch | trace | options | head $/xi };
 
 1;
 
@@ -107,8 +107,7 @@ Matches valid method names.
 
 =head2 C<HTTPMethod>
 
-Valid HTTP methods for OpenAPI. May be lower or upper-case, but not mixed. In
-other words, C<get> or C<GET>, but not C<Get>.
+Valid HTTP methods for OpenAPI. Case-insensitive.
 
 =head2 C<HTTPStatusCode>
 
