@@ -50,7 +50,7 @@ sub template {
     my $output = '';
     $template->process(
         \$arg_for->{template},
-        { %{ $arg_for->{data} }, REWRITE_BOUNDARY => $REWRITE_BOUNDARY },
+        { %{ $arg_for->{data} }, rewrite_boundary => $REWRITE_BOUNDARY },
         \$output
     );
     my @chunks = split /$REWRITE_BOUNDARY/ => $output;
@@ -75,7 +75,7 @@ sub write_template {
         template_data => HashRef,
         path          => Directory,
         file          => NonEmptyStr,
-        tidy          => Bool,
+        tidy          => Optional [Bool],
     );
     my $arg_for = $check->(@_);
     my $result  = template(

@@ -54,12 +54,12 @@ sub write_file {
         path     => Directory,
         file     => NonEmptyStr,
         document => NonEmptyStr,
-        rewrite  => Optional [Bool],
+        overwrite  => Optional [Bool],
     );
     my $arg_for = $check->(@_);
     make_path( $arg_for->{path} );
     my $file = catfile( $arg_for->{path}, $arg_for->{file} );
-    if ( -e $file ) {
+    if ( -e $file && !$arg_for->{overwrite} ) {
         my $contents = slurp($file);
         my $rewrite  = Net::OpenAPI::Utils::ReWrite->new(
             old_text   => $contents,

@@ -122,13 +122,13 @@ has validator => (
     handles => { schema => 'schema', schema_errors => 'errors' },
 );
 
-=head1 routes
+=head1 endpoints
 
-All routes defined by L</schema>, as L</Net::OpenAPI::Builder::Endpoint> instances
+All endpoints defined by L</schema>, as L</Net::OpenAPI::Builder::Endpoint> instances
 
 =cut
 
-has routes => (
+has endpoints => (
     is      => 'lazy',
     isa     => ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ],
     builder => sub {
@@ -137,32 +137,32 @@ has routes => (
     },
 );
 
-=head2 routes_by_controller
+=head2 endpoints_by_controller
 
-All L</routes> grouped by target Controller.
+All L</endpoints> grouped by target Controller.
 
 POLICY: L<Net::OpenAPI::Builder::Endpoint/controller_package> determines the
-Controller for each route.
+Controller for each endpoint.
 
 =cut
 
-has routes_by_controller => (
+has endpoints_by_controller => (
     is      => 'lazy',
     isa     => HashRef [ ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ] ],
     builder => sub {
         my $self = shift;
-        my %routes_by_controller;
-        for my $route ( @{ $self->routes } ) {
-            my $controller_name = $route->controller_name;
-            push @{ $routes_by_controller{$controller_name} }, $route;
+        my %endpoints_by_controller;
+        for my $endpoint ( @{ $self->endpoints } ) {
+            my $controller_name = $endpoint->controller_name;
+            push @{ $endpoints_by_controller{$controller_name} }, $endpoint;
         }
-        return \%routes_by_controller;
+        return \%endpoints_by_controller;
     },
 );
 
 =head1 controllers
 
-L<Net::OpenAPI::Builder::Controller> instances for all controllers in L</routes_by_controller>
+L<Net::OpenAPI::Builder::Controller> instances for all controllers in L</endpoints_by_controller>
 
 =cut
 
@@ -172,15 +172,15 @@ has controllers => (
     builder => sub {
         my $self = shift;
 
-        my $routes_by_controller = $self->routes_by_controller;
+        my $endpoints_by_controller = $self->endpoints_by_controller;
         return [
             map {
                 Net::OpenAPI::Builder::Controller->new(
-                    base   => $self->base,
-                    name   => $_,
-                    routes => $routes_by_controller->{$_}
+                    base      => $self->base,
+                    name      => $_,
+                    endpoints => $endpoints_by_controller->{$_}
                 )
-            } keys %$routes_by_controller
+            } keys %$endpoints_by_controller
         ];
     },
 );
@@ -251,7 +251,7 @@ has code => (
         # the sort keeps the auto-generated code deterministic. We put short paths
         # first just because it's easier to read, but we break ties by sorting on
         # the guaranteed unique names
-        my @routes = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->routes };
+        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->endpoints };
 
         return template(
             name     => 'app',
@@ -262,7 +262,7 @@ has code => (
                 package     => $package,
                 models      => \@models,
                 controllers => \@controllers,
-                routes      => \@routes,
+                endpoints   => \@endpoints,
             },
             tidy => 1,
         );
@@ -273,10 +273,10 @@ sub _app_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/\n        /\n/gm;
+        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
         package [% package %];
         
-        [% REWRITE_BOUNDARY %]
+        [% rewrite_boundary %]
         use v5.16.0;
         use strict;
         use warnings;
@@ -292,8 +292,8 @@ sub _app_template {
         [% END %]
 
         my $routes = [
-            [% FOREACH route IN routes %]
-            { path => '[% route.path %]', http_method => '[% route.http_method %]', controller => '[% route.controller_package %]', method => '[% route.method %]' },
+            [% FOREACH endpoint IN endpoints %]
+            { path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', controller => '[% base %]::Controller::[% endpoint.controller_name %]', method => '[% endpoint.method_name %]' },
             [% END %]
         ];
 
@@ -337,7 +337,7 @@ sub _app_template {
             };
         }
 
-        [% REWRITE_BOUNDARY %]
+        [% rewrite_boundary %]
         
         1;
         
@@ -385,16 +385,17 @@ sub write {
     $self->_write_controllers;
     $self->_write_models;
     $self->_write_app;
-    $self->_write_driver;
+    $self->_write_psgi;
 }
 
 sub _write_schema {
     my $self = shift;
 
     write_file(
-        path     => $self->dir . '/data',
-        file     => 'openapi_schema',
-        document => slurp( $self->schema_file ),
+        path      => $self->dir . '/data',
+        file      => 'openapi_schema',
+        document  => slurp( $self->schema_file ),
+        overwrite => 1,
     );
 }
 
@@ -404,6 +405,7 @@ sub _write_controllers {
     for my $controller ( @{ $self->controllers } ) {
 
         my $package = $controller->package;
+        warn "NCM DEBUG: $package\n";
         my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
 
         write_file(
@@ -430,17 +432,41 @@ sub _write_models {
     }
 }
 
-sub _write_driver {
+sub _write_psgi {
     my $self = shift;
 
-    write_template(
-        path          => $self->dir . "/script",
-        file          => 'app.psgi',
-        template_name => 'psgi',
-        template_data => {
-            app => $self->app,
-        },
+    write_file(
+        path     => $self->dir . "/script",
+        file     => 'app.psgi',
+        document => template(
+            name     => 'psgi',
+            template => $self->_psgi_template,
+            data     => {
+                app => $self->app,
+            },
+        ),
     );
+}
+
+sub _psgi_template {
+    state $template;
+
+    return $template //= do {
+        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
+        #!/usr/bin/env perl
+
+        [% rewrite_boundary %]
+        use strict;
+        use warnings;
+        use lib '../lib'; # XXX fix me (load Net::OpenAPI::*)
+
+        use [% app %];
+        [% app %]->get_app;
+        [% rewrite_boundary %]
+        EOF
+
+        $template_content;
+    };
 }
 
 sub _write_app {
@@ -454,5 +480,9 @@ sub _write_app {
         document => $self->code,
     );
 }
+
+1;
+__END__
+
 
 1;

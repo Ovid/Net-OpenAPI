@@ -46,13 +46,13 @@ has name => (
     required => 1,
 );
 
-=head2 routes
+=head2 endpoints
 
-The routes for this Controller, as ArrayRef of L<Net::OpenAPI::Builder::Endpoint>
+The endpoints for this Controller, as ArrayRef of L<Net::OpenAPI::Builder::Endpoint>
 
 =cut
 
-has routes => (
+has endpoints => (
     is       => 'ro',
     isa      => ArrayRef [ InstanceOf ['Net::OpenAPI::Builder::Endpoint'] ],
     required => 1,
@@ -62,7 +62,7 @@ has routes => (
 
 =head2 errors
 
-Errors: duplicate routes or duplicate generated methods
+Errors: duplicate endpoints or duplicate generated methods
 
 =cut
 
@@ -72,14 +72,14 @@ has errors => (
     builder => sub {
         my $self = shift;
 
-        my ( @errors, %routes_seen, %methods_seen );
-        for my $route ( @{ $self->routes } ) {
-            my $path        = $route->path;
-            my $http_method = lc $route->http_method;
-            my $method      = $route->method_name;
+        my ( @errors, %paths_seen, %methods_seen );
+        for my $endpoint ( @{ $self->endpoints } ) {
+            my $path        = $endpoint->path;
+            my $http_method = lc $endpoint->http_method;
+            my $method      = $endpoint->method_name;
 
-            if ( $routes_seen{$path}{$http_method}++ ) {
-                push @errors, "Duplicate route: path: $path, method: $http_method";
+            if ( $paths_seen{$path}{$http_method}++ ) {
+                push @errors, "Duplicate endpoint: path: $path, method: $http_method";
             }
 
             # XXX - should never happen
@@ -124,15 +124,16 @@ has code => (
         # the sort keeps the auto-generated code deterministic. We put short paths
         # first just because it's easier to read, but we break ties by sorting on
         # the guaranteed unique generated method names
-        my @routes = map { $_->code } sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->routes };
+        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->endpoints };
 
-        template(
+        $DB::single = 1;
+        return template(
             name     => 'controller',
             template => $self->_controller_template,
             data     => {
-                package  => $self->package,
-                template => $self->_controller_template,
-                routes   => \@routes,
+                package   => $self->package,
+                template  => $self->_controller_template,
+                endpoints => \@endpoints,
             },
             tidy => 1,
         );
@@ -143,7 +144,7 @@ sub _controller_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/\n        /\n/gm;
+        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
         package [% package %];
 
         use strict;
@@ -165,20 +166,22 @@ sub _controller_template {
         L<Net::OpenAPI::App::Router> at compile time to determine which
         model and method incoming requests are directed to.
 
-        [% REWRITE_BOUNDARY %]
+        =cut
+
+        [% rewrite_boundary %]
         sub routes {
             return [
-                [% FOREACH route IN routes %]
-                { path => '[% route.path %]', http_method => '[% route.http_method %], method => '[% route.method %]' },
+                [% FOREACH endpoint IN endpoints %]
+                { path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', method => '[% endpoint.method %]' },
                 [% END %]
             ]
         }
-        [% REWRITE_BOUNDARY %]
+        [% rewrite_boundary %]
 
         =head1 ROUTES
 
-        [% FOREACH route IN routes %]
-        [% route.code %]
+        [% FOREACH endpoint IN endpoints %]
+        [% endpoint.code %]
         [% END %]
 
         1;

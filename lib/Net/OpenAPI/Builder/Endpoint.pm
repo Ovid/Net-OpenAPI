@@ -150,7 +150,7 @@ has _method_info => (
 
         # grab everything except first path part
         my ( $controller, @path ) = grep {/\S/} split m{/} => $self->path;
-        $controller = normalize_string($controller);
+        $controller = ucfirst normalize_string($controller);
 
         my $method = lc $self->http_method;
 
@@ -261,7 +261,7 @@ sub _endpoint_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/\n        /\n/gm;
+        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
         =head2 C<[% http_method %] [% path %]>
 
         [% description %]
@@ -284,6 +284,7 @@ sub _endpoint_template {
             );
         };
         EOF
+
         $template_content;
     };
 }

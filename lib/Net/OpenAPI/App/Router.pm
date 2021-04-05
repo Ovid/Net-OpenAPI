@@ -19,69 +19,45 @@ use Net::OpenAPI::Utils::Core qw(
   get_path_prefix
 );
 
-has _routes => (
-    is      => 'ro',
-    default => sub { {} },
-);
-
-=head2 C<add_routes>
-
-    $self->add_routes(\@routes, $verbose);
-
-Like C<add_route>, but for an entire set of routes.
-
-=cut
-
-sub add_routes {
-    my ( $self, $routes, $verbose ) = @_;
-    $self->add_route($_, $verbose) foreach @$routes;
-}
-
-=head2 C<add_route(\%route, $verbose)>
-
-    my $router = Net::OpenAPI::App::Router->new;
-    $router->add_route(
-        {
-            http_method => $http_method,
-            path        => $path,
-            dispatch_to => $class_name,
-            action      => $method,
-        }
-    );
-
-Adds the given route to our router. If passed a second, true value, will
-print the route to STDERR.
-
-=cut
-
-sub add_route {
-    my ( $self, $route, $verbose ) = @_;
-    state $check = compile(
+has routes => (
+    is  => 'ro',
+    isa => ArrayRef [
         Dict [
             path        => OpenAPIPath,
             http_method => HTTPMethod,
-            dispatch_to => PackageName,
+            controller  => PackageName,
             action      => MethodName,
         ]
-    );
-    ($route) = $check->($route);
+    ],
+    required => 1,
+);
 
-    my $routes = $self->_routes;    # reference, so this mutates
-    my $path   = $route->{path};
-    $path =~ s/\/$//;               # strip trailing slash if needed
-    my $prefix       = get_path_prefix($path);
-    my $segments     = $path =~ tr{/}{/};
-    my $http_method  = uc $route->{http_method};
-    my $these_routes = $routes->{$http_method} //= {};
+has _route_cache => (
+    is      => 'lazy',
+    isa     => HashRef,
+    builder => sub {
+        my $self        = shift;
+        my $route_cache = {};
 
-    if ( exists $these_routes->{$segments}{$prefix}{$path} ) {
-        croak("Route for $http_method $path already added");
-    }
-    if ($verbose) {
-        say STDERR "Added route $http_method $path ($prefix)";
-    }
-    $these_routes->{$segments}{$prefix}{$path} = $route;
-}
+        for my $route ( @{ $self->routes } ) {
+            my $path = $route->{path};
+            $path =~ s/\/$//;    # strip trailing slash if needed
+            my $prefix        = get_path_prefix($path);
+            my $segments      = $path =~ tr{/}{/};
+            my $http_method   = uc $route->{http_method};
+            my $cached_routes = $route_cache->{$http_method} //= {};
+
+            if ( exists $cached_routes->{$segments}{$prefix}{$path} ) {
+                croak("Route for $http_method $path already registered");
+            }
+            if ($verbose) {
+                say STDERR "Registered route $http_method $path ($prefix)";
+            }
+            $cached_routes->{$segments}{$prefix}{$path} = $route;
+        }
+        return $route_cache;
+    },
+);
 
 =head2 C<match>
 
@@ -103,7 +79,7 @@ sub match {
     state $dispatch_cache = {};
     my $match = $self->_match($req) or return;
 
-    my ( $package, $function ) = @{$match}{qw/dispatch_to action/};
+    my ( $package, $function ) = @{$match}{qw/controller action/};
     unless ( exists $dispatch_cache->{$package}{$function} ) {
 
         # it's not in the dispatch cache, so let's load the module
@@ -125,13 +101,13 @@ sub _match {
 
     # routes are keyed by:
     #
-    # $self->_routes->{$http_method}{$num_segments}{$prefix}{$path}
+    # $self->_route_cache->{$http_method}{$num_segments}{$prefix}{$path}
 
     my $path = $req->path;
     $path =~ s/\/$//;    # strip trailing slash if needed
     my $prefix    = get_path_prefix($path);
     my $segments  = $path =~ tr{/}{/};
-    my $route_for = $self->_routes->{ $req->method }{$segments}{$prefix} or return;
+    my $route_for = $self->_route_cache->{ $req->method }{$segments}{$prefix} or return;
 
     my $matched = 0;
     my @candidate_matches;
