@@ -92,20 +92,6 @@ sub write_template {
     );
 }
 
-sub _get_template {
-    my $requested = shift;
-    my %template  = (
-        app        => \&_app_template,
-        controller => \&_controller_template,
-        model      => \&_model_template,
-        method     => \&_method_template,
-        psgi       => \&_psgi_template,
-        example    => \&_example_template,
-    );
-    my $code = $template{$requested} or croak("No such template for '$requested'");
-    return $code->();
-}
-
 =head1 SYNOPSIS
 
     use Net::OpenAPI::Utils::Template qw(template);
