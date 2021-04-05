@@ -49,11 +49,11 @@ sub test_resolve_method {
 
     my %seen;
     foreach my $http_method ( sort keys %results_for ) {
-        my %result_for = $results_for{$http_method}->%*;
+        my %result_for = %{ $results_for{$http_method} };
         foreach my $path ( sort keys %result_for ) {
-            my ( $expected_package, $expected_method, $expected_args ) = $result_for{$path}->@*;
+            my ( $expected_package, $expected_method, $expected_args ) = @{ $result_for{$path} };
             $expected_args //= [];
-            my $package = resolve_package('My::Project', 'Model', $path);
+            my $package = resolve_package( 'My::Project', 'Model', $path );
             my ( $method, $args ) = resolve_method( $http_method, $path );
             if ( $seen{$http_method}{$path}{$package}{$method}++ ) {
                 croak("Oops! We already saw &$package\::$method via $http_method $path");
