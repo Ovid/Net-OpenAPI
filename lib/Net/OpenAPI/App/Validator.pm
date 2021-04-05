@@ -28,7 +28,7 @@ has _validator => (
         my $self = shift;
         return JSON::Validator::Schema::OpenAPIv3->new( $self->raw_schema );
     },
-    handles => ['schema'],
+    handles => [ 'schema', 'errors' ],
 );
 
 has _schema_as_perl => (
