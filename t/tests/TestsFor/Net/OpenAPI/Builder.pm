@@ -4,7 +4,7 @@ package TestsFor::Net::OpenAPI::Builder;
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
-    Directory
+  Directory
 );
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 use File::Temp qw(tempdir);
@@ -18,16 +18,16 @@ has _tmpdir => (
 
 sub DEMOLISH {
     my $test = shift;
-    rmtree($test->_tmpdir);
+    rmtree( $test->_tmpdir );
 }
 
 sub test_basics {
     my $test = shift;
 
     my $builder = $test->class_name->new(
-        schema => 'data/v3-petstore.json',
-        dir    => $test->_tmpdir,
-        base   => 'Some::OpenAPI::Project',
+        schema_file => 'data/v3-petstore.json',
+        dir         => $test->_tmpdir,
+        base        => 'Some::OpenAPI::Project',
     );
     ok $builder->write, 'We should be able to write our code';
 }
