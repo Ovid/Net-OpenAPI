@@ -443,6 +443,7 @@ sub _write_psgi {
             template => $self->_psgi_template,
             data     => {
                 app => $self->app,
+                dir => $self->dir,
             },
         ),
     );
@@ -458,7 +459,8 @@ sub _psgi_template {
         [% rewrite_boundary %]
         use strict;
         use warnings;
-        use lib '../lib'; # XXX fix me (load Net::OpenAPI::*)
+        use lib 'lib'; # XXX fix me (load Net::OpenAPI::*)
+        use lib '[% dir %]/lib'; # XXX fix me (load Net::OpenAPI::*)
 
         use [% app %];
         [% app %]->get_app;

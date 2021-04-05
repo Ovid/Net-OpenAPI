@@ -10,6 +10,7 @@ use Net::OpenAPI::App::Types qw(
   compile
   ArrayRef
   Dict
+  HashRef
   HTTPMethod
   MethodName
   OpenAPIPath
@@ -19,6 +20,8 @@ use Net::OpenAPI::Utils::Core qw(
   get_path_prefix
 );
 
+my $verbose = 0;
+
 has routes => (
     is  => 'ro',
     isa => ArrayRef [
@@ -26,7 +29,7 @@ has routes => (
             path        => OpenAPIPath,
             http_method => HTTPMethod,
             controller  => PackageName,
-            action      => MethodName,
+            method      => MethodName,
         ]
     ],
     required => 1,
@@ -79,7 +82,7 @@ sub match {
     state $dispatch_cache = {};
     my $match = $self->_match($req) or return;
 
-    my ( $package, $function ) = @{$match}{qw/controller action/};
+    my ( $package, $function ) = @{$match}{qw/controller method/};
     unless ( exists $dispatch_cache->{$package}{$function} ) {
 
         # it's not in the dispatch cache, so let's load the module
