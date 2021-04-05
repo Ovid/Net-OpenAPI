@@ -5,11 +5,24 @@ package TestsFor::Net::OpenAPI::Utils::Template;
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 use Net::OpenAPI::Utils::Template qw(template);
 
+my $example_template = <<'EOF';
+Foo: [% foo %]
+
+[% rewrite_boundary %]
+
+Bar: [% bar %]
+
+[% rewrite_boundary %]
+
+Baz: [% baz %]
+EOF
+
 sub test_template {
     my $test   = shift;
     my $output = template(
-        'example',
-        {
+        name     => 'example',
+        template => $example_template,
+        data     => {
             foo => 'oof',
             bar => 'rab',
             baz => 'zab',
@@ -35,24 +48,9 @@ sub test_errors {
         bar => 'rab',
         baz => undef,
     );
-    throws_ok { template( 'example', \%args ) }
+    throws_ok { template( name => 'example', template => $example_template, data => \%args ) }
     qr/Undefined value in template path 'baz' in 'example' template./,
       'Processing a template with undef or missing fields should generate an error';
-    $args{baz}   = 3;
-    $args{extra} = 4;
-    throws_ok { template( 'example', \%args ) }
-    qr/The following variables were passed to the 'example' template but not used: extra/,
-      'Processing a template with extra fields should generate an error';
-
-    explain template(
-        'app',
-        {
-            package     => 'My::Package',
-            models      => [ 'My::Model', 'My::Model2' ],
-            controllers => [ 'My::Controller', 'My::Controller2' ],
-            base        => 'My App Name',
-        }
-    );
 }
 
 1;
