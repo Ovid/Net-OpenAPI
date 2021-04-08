@@ -211,7 +211,6 @@ sub normalize_string {
     return $string;
 }
 
-
 =head2 C<unindent($string)>
 
 	$string = unindent($string);
@@ -229,7 +228,7 @@ Note that we assume spaces, not tabs.
 sub unindent {
     my $str = shift;
     my $min = $str =~ /^(\s+)/ ? length($1) : 0;
-    if ( $min && $min > 0 ) {
+    if ( $min > 0 ) {
         my $less_than = $min - 1;
         if ( $str =~ /^([ ]{0,$less_than}\b.*)$/m ) {
             croak("unindent() failed with line found with indentation less than '$min':\n[$1]");
