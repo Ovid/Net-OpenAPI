@@ -20,6 +20,7 @@ use base 'Exporter';
 our @EXPORT_OK = qw(
   slurp
   splat
+  unindent
   write_file
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
@@ -51,10 +52,10 @@ will use L<Net::OpenAPI::Utils::ReWrite> to rewrite the contents.
 
 sub write_file {
     state $check = compile_named(
-        path     => Directory,
-        file     => NonEmptyStr,
-        document => NonEmptyStr,
-        overwrite  => Optional [Bool],
+        path      => Directory,
+        file      => NonEmptyStr,
+        document  => NonEmptyStr,
+        overwrite => Optional [Bool],
     );
     my $arg_for = $check->(@_);
     make_path( $arg_for->{path} );
@@ -100,6 +101,34 @@ sub splat {
     open my $fh, '>', $file or croak qq{Can't open file "$file": $!};
     print {$fh} $content or croak qq{Can't write to file "$file": $!};
     return $file;
+}
+
+=head2 C<unindent($string)>
+
+	$string = unindent($string);
+
+Unindent's string, using the length of leading spaces of the first line as the
+amount to unindent by.
+
+If any subsequent line has leading spaces less than the first line, this code will
+C<croak()> with an appropriate error message.
+
+Note that we assume spaces, not tabs.
+
+=cut
+
+sub unindent {
+    my $str = shift;
+    my $min = 0;
+    my $min = $str =~ /^(\s+)/ ? length($1) : 0;
+    if ( $min && $min > 0 ) {
+        my $less_than = $min - 1;
+        if ( $str =~ /^([ ]{0,$less_than}\b.*)$/m ) {
+            croak("unindent() failed with line found with indentation less than '$min':\n[$1]");
+        }
+    }
+    $str =~ s/^[ ]{0,$min}//gm if $min;
+    return $str;
 }
 
 1;
