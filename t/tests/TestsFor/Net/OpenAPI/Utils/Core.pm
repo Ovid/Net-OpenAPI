@@ -75,4 +75,39 @@ sub test_get_path_prefix {
     is $prefix, 'PetSemetary', '... and get names suitable for using in classes';
 }
 
+sub test_unindent {
+    my $test = shift;
+    my $code = unindent(<<"    END");
+    package Some::Package;
+    
+    use v5.16.0;
+    use strict;
+    use warnings;
+        # keep this indentation
+      # and this
+    END
+    my $expected = <<"END";
+package Some::Package;
+
+use v5.16.0;
+use strict;
+use warnings;
+    # keep this indentation
+  # and this
+END
+    is $code, $expected, 'unindent() should properly unindent our code';
+
+    my $bad_indent = <<"    END";
+    package Some::Package;
+    
+  use v5.16.0;
+    use strict;
+    use warnings;
+        # keep this indentation
+      # and this
+    END
+    throws_ok { unindent($bad_indent) }
+      qr/\Qunindent() failed with line found with indentation less than '4'/,
+      'Unindenting anything with a line whose leading whitespaces are less than first line should fail';
+}
 1;
