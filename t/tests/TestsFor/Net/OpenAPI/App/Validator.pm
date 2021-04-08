@@ -57,8 +57,9 @@ sub test_serialization {
 }
 
 sub test_parameters_for_request_and_response {
-    my $test = shift;
-    ok my $validator = $test->class_name->new( schema => 'data/v3-petstore.json' ),
+    my $test       = shift;
+    my $raw_schema = decode_json( slurp('data/v3-petstore.json') );
+    ok my $validator = $test->class_name->new( raw_schema => $raw_schema ),
       'We should be able to create our validator object';
     my $request_params = $validator->parameters_for_request( [ 'put', '/pet' ] );
     my $expected       = {

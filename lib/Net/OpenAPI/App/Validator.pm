@@ -63,9 +63,9 @@ sub get_component {
     return dclone($schema);
 }
 
-=head2 C<parameters_for_request( $method, $path )>
+=head2 C<parameters_for_request( [ $method, $path ] )>
 
-    my $params = $validator->parameters_for_request( 'GET', '/path/to/{something}' );
+    my $params = $validator->parameters_for_request( [ 'GET', '/path/to/{something}' ] );
 
 Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_request> method,
 but we fully expand C<$ref>s and booleans.
@@ -73,15 +73,15 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_request {
-    my ( $self, $method, $path ) = @_;
-    my $params   = $self->_validator->parameters_for_request( [ $method, $path ] ) or return;
+    my ( $self, $args ) = @_;
+    my $params   = $self->_validator->parameters_for_request($args) or return;
     my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
 
-=head2 C<parameters_for_response( $method, $path )>
+=head2 C<parameters_for_response( [ $method, $path ] )>
 
-    my $params = $validator->parameters_for_response( 'GET', '/path/to/{something}' );
+    my $params = $validator->parameters_for_response( [ 'GET', '/path/to/{something}' ] );
 
 Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_response> method,
 but we fully expand C<$ref>s and booleans.
@@ -89,8 +89,8 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_response {
-    my ( $self, $method, $path ) = @_;
-    my $params   = $self->_validator->parameters_for_response( [ $method, $path ] ) or return;
+    my ( $self, $args ) = @_;
+    my $params   = $self->_validator->parameters_for_response($args) or return;
     my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }

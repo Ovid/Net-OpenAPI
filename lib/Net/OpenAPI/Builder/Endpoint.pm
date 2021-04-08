@@ -91,7 +91,7 @@ has request_params => (
     isa     => ArrayRef,
     builder => sub {
         my $self = shift;
-        return $self->validator->parameters_for_request( $self->http_method, $self->path ) // [];
+        return $self->validator->parameters_for_request( [ $self->http_method, $self->path ] ) // [];
     },
 );
 
@@ -100,7 +100,7 @@ has response_params => (
     isa     => ArrayRef,
     builder => sub {
         my $self = shift;
-        return $self->validator->parameters_for_response( $self->http_method, $self->path ) // [];
+        return $self->validator->parameters_for_response( [ $self->http_method, $self->path ] ) // [];
     },
 );
 
