@@ -92,6 +92,8 @@ sub write_template {
     );
 }
 
+1;
+
 =head1 SYNOPSIS
 
     use Net::OpenAPI::Utils::Template qw(template);
