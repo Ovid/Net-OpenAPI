@@ -17,6 +17,7 @@ use Net::OpenAPI::Utils::Core qw(
   get_path_and_filename
   resolve_root
   tidy_code
+  unindent
 );
 use Net::OpenAPI::App::Types qw(
   ArrayRef
@@ -273,7 +274,7 @@ sub _app_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
+        my $template_content = unindent(<<'        EOF');
         package [% package %];
         
         [% rewrite_boundary %]
@@ -453,7 +454,7 @@ sub _psgi_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
+        my $template_content = unindent(<<'        EOF');
         #!/usr/bin/env perl
 
         [% rewrite_boundary %]

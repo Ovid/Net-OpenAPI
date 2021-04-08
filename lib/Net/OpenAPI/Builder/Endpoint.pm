@@ -4,7 +4,7 @@ use Moo;
 use Net::OpenAPI::Policy;
 use Data::Dumper;
 use Net::OpenAPI::Utils::Template qw(template);
-use Net::OpenAPI::Utils::Core qw(normalize_string);
+use Net::OpenAPI::Utils::Core qw(unindent normalize_string);
 use String::Escape qw(quote);
 use Scalar::Util qw(looks_like_number blessed);
 use Net::OpenAPI::App::Types qw(
@@ -261,7 +261,7 @@ sub _endpoint_template {
     state $template;
 
     return $template //= do {
-        ( my $template_content = <<'        EOF' ) =~ s/^        //gm;
+        my $template_content = unindent(<<'        EOF');
         =head2 C<[% http_method %] [% path %]>
 
         [% description %]
