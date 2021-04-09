@@ -417,7 +417,6 @@ sub _write_controllers {
     for my $controller ( @{ $self->controllers } ) {
 
         my $package = $controller->package;
-        warn "NCM DEBUG: $package\n";
         my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
 
         write_file(
