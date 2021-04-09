@@ -14,8 +14,8 @@ use Net::OpenAPI::App::Types qw(
 use Net::OpenAPI::Policy;
 use Digest::MD5 'md5_hex';
 
-sub _start_marker_format {'#<<<: do not touch any code between this and the end comment. Checksum: %s'}
-sub _end_marker_format   {'#>>>: do not touch any code between this and the start comment. Checksum: %s'}
+sub _start_marker_format {'#<<< do not touch any code between this and the end comment. Checksum: %s'}
+sub _end_marker_format   {'#>>> do not touch any code between this and the start comment. Checksum: %s'}
 
 has old_text => (
     is        => 'ro',
