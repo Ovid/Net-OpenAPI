@@ -29,7 +29,7 @@ has routes => (
             path        => OpenAPIPath,
             http_method => HTTPMethod,
             controller  => PackageName,
-            method      => MethodName,
+            action      => MethodName,
         ]
     ],
     required => 1,
@@ -82,7 +82,7 @@ sub match {
     state $dispatch_cache = {};
     my $match = $self->_match($req) or return;
 
-    my ( $package, $function ) = @{$match}{qw/controller method/};
+    my ( $package, $function ) = @{$match}{qw/controller action/};
     unless ( exists $dispatch_cache->{$package}{$function} ) {
 
         # it's not in the dispatch cache, so let's load the module
