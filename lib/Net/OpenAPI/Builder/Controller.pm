@@ -126,16 +126,17 @@ has code => (
         # the guaranteed unique generated method names
         my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->endpoints };
 
-        $DB::single = 1;
-        return template(
-            name     => 'controller',
-            template => $self->_controller_template,
-            data     => {
-                package   => $self->package,
-                template  => $self->_controller_template,
-                endpoints => \@endpoints,
-            },
-            tidy => 1,
+        return tidy_code(
+            template(
+                name     => 'controller',
+                template => $self->_controller_template,
+                data     => {
+                    package   => $self->package,
+                    template  => $self->_controller_template,
+                    endpoints => \@endpoints,
+                },
+                tidy => 1,
+            )
         );
     }
 );
@@ -171,10 +172,8 @@ sub _controller_template {
         [% rewrite_boundary %]
         sub routes {
             return [
-                [% FOREACH endpoint IN endpoints %]
-                { path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', method => '[% endpoint.method %]' },
-                [% END %]
-            ]
+                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', method => '[% endpoint.method_name %]' },[% END %]
+            ];
         }
         [% rewrite_boundary %]
 
