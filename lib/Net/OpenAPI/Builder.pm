@@ -199,12 +199,6 @@ has controllers => (
     },
 );
 
-has models => (
-    is      => 'lazy',
-    isa     => ArrayRef,
-    builder => sub { [] },
-);
-
 =head1 METHODS
 
 =head2 validate
@@ -260,7 +254,6 @@ has code => (
         my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
 
         my @controllers = sort map { $_->package } @{ $self->controllers };
-        my @models      = sort map { $_->package } @{ $self->models };
 
         # the sort keeps the auto-generated code deterministic. We put short paths
         # first just because it's easier to read, but we break ties by sorting on
@@ -274,7 +267,6 @@ has code => (
                 base        => $self->base,
                 template    => $self->_app_template,
                 package     => $package,
-                models      => \@models,
                 controllers => \@controllers,
                 endpoints   => \@endpoints,
             },
@@ -302,11 +294,8 @@ sub _app_template {
         
         [% FOREACH controller IN controllers %]use [% controller %];
         [% END %]
-        [% FOR model IN models %]use [% model %];
-        [% END %]
-
-        my $routes = [
-            [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', controller => '[% base %]::Controller::[% endpoint.controller_name %]', action => '[% endpoint.action_name %]' },[% END %]
+        my $routes = [[% FOREACH controller IN controllers %]
+            @{ [% controller %]->routes };[% END %]
         ];
 
         my $router = Net::OpenAPI::App::Router->new( routes => $routes );
@@ -395,7 +384,6 @@ sub write {
 
     $self->_write_schema;
     $self->_write_controllers;
-    $self->_write_models;
     $self->_write_app;
     $self->_write_psgi;
 }
@@ -403,6 +391,8 @@ sub write {
 sub _write_schema {
     my $self = shift;
 
+    # we're will eventually need to compose multiple schema files,
+    # so this won't be enough
     write_file(
         path      => $self->dir . '/data',
         file      => 'openapi_schema',
@@ -423,22 +413,6 @@ sub _write_controllers {
             path     => $path,
             file     => $filename,
             document => $controller->code,
-        );
-    }
-}
-
-sub _write_models {
-    my $self = shift;
-
-    for my $model ( @{ $self->models } ) {
-
-        my $package = $model->package;
-        my ( $path, $filename ) = get_path_and_filename( $self->dir, $package );
-
-        write_file(
-            path     => $path,
-            file     => $filename,
-            document => $model->code,
         );
     }
 }
