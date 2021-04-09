@@ -5,10 +5,11 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder;
 use Getopt::Long;
 GetOptions(
-    'schema=s' => \( my $schema    = 'data/v3-petstore.json' ),
-    'base=s'   => \( my $base      = 'My::Project::OpenAPI' ),
-    'dir=s'    => \( my $directory = 'target' ),
-    'api_base' => \( my $api_base  = '/api/v1' ),
+    'schema=s'   => \( my $schema    = 'data/v3-petstore.json' ),
+    'base=s'     => \( my $base      = 'My::Project::OpenAPI' ),
+    'dir=s'      => \( my $directory = 'target' ),
+    'api_base=s' => \( my $api_base  = '/api/v1' ),
+    'doc_base=s' => \( my $doc_base  = '/api/docs' ),
 ) or die "Bad Options";
 
 my $builder = Net::OpenAPI::Builder->new(
@@ -16,6 +17,7 @@ my $builder = Net::OpenAPI::Builder->new(
     base        => $base,
     dir         => $directory,
     api_base    => $api_base,
+    doc_base    => $doc_base,
 );
 $builder->write;
 
@@ -37,6 +39,7 @@ schema. You can change any or all of those:
     perl -Ilib write.pl --base My::OpenAPI::Project
     perl -Ilib write.pl --schema my-schema.json
     perl -Ilib write.pl --api_base /path/to/my/api
+    perl -Ilib write.pl --doc_base /path/to/my/api/docs
 
 Currently it only understands V3 JSON schemas (easy to fix?).
 

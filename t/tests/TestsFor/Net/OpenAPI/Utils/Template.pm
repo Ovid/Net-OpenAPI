@@ -31,9 +31,9 @@ sub test_template {
     my $expected = <<'END';
 Foo: oof
 
-#<<<: do not touch any code between this and the end comment. Checksum: 46da8ccba0874e95c56493dc07144692
+#<<< do not touch any code between this and the end comment. Checksum: 46da8ccba0874e95c56493dc07144692
 Bar: rab
-#>>>: do not touch any code between this and the start comment. Checksum: 46da8ccba0874e95c56493dc07144692
+#>>> do not touch any code between this and the start comment. Checksum: 46da8ccba0874e95c56493dc07144692
 
 
 Baz: zab

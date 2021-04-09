@@ -3,12 +3,14 @@ package Net::OpenAPI::Builder;
 # ABSTRACT: Build our framework stub
 
 use Moo;
-use Mojo::File qw(path);
+use File::Path qw(make_path);
+use File::Spec::Functions qw(splitpath catdir);
 use Mojo::JSON qw(decode_json);
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder::Controller;
 use Net::OpenAPI::Builder::Endpoint;
+use Net::OpenAPI::Builder::Docs;
 use Net::OpenAPI::Utils::Template qw(template write_template);
 use Net::OpenAPI::Utils::File qw(slurp write_file);
 use Net::OpenAPI::App::Validator;
@@ -75,6 +77,18 @@ Base path for openapi directories. (e.g., C</api/v1>);
 =cut
 
 has api_base => (
+    is       => 'ro',
+    isa      => OpenAPIPath,
+    required => 1,
+);
+
+=head2 doc_base
+
+Base path for openapi documentation. (e.g., C</api/docs>);
+
+=cut
+
+has doc_base => (
     is       => 'ro',
     isa      => OpenAPIPath,
     required => 1,
@@ -148,6 +162,19 @@ has endpoints => (
     builder => sub {
         my $self = shift;
         return [ map { Net::OpenAPI::Builder::Endpoint->new( validator => $self->validator, route => $_ ) } @{ $self->schema->routes } ];
+    },
+);
+
+has docs => (
+    is      => 'lazy',
+    isa     => InstanceOf ['Net::OpenAPI::Builder::Docs'],
+    builder => sub {
+        my $self = shift;
+        return Net::OpenAPI::Builder::Docs->new(
+            schema_file => $self->schema_file,
+            base        => $self->base,
+            path        => $self->doc_base,
+        );
     },
 );
 
@@ -266,6 +293,7 @@ has code => (
             data     => {
                 base        => $self->base,
                 template    => $self->_app_template,
+                docs        => $self->docs->package,
                 package     => $package,
                 controllers => \@controllers,
                 endpoints   => \@endpoints,
@@ -291,11 +319,12 @@ sub _app_template {
         use Plack::Request;
         use Net::OpenAPI::App::Router;
         use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPInternalServerError);
+        use [% docs %];
         
         [% FOREACH controller IN controllers %]use [% controller %];
         [% END %]
         my $routes = [[% FOREACH controller IN controllers %]
-            @{ [% controller %]->routes };[% END %]
+            [% controller %]->routes,[% END %]
         ];
 
         my $router = Net::OpenAPI::App::Router->new( routes => $routes );
@@ -335,6 +364,13 @@ sub _app_template {
                     warn $@;
                     $res = $req->new_response(HTTPInternalServerError);
                 }
+            };
+        }
+
+        sub doc_index {
+            return sub {
+                my $req = Plack::Request->new(shift);
+                return [% docs %]->index($req)
             };
         }
 
@@ -385,6 +421,7 @@ sub write {
     $self->_write_schema;
     $self->_write_controllers;
     $self->_write_app;
+    $self->_write_docs;
     $self->_write_psgi;
 }
 
@@ -393,9 +430,13 @@ sub _write_schema {
 
     # we're will eventually need to compose multiple schema files,
     # so this won't be enough
+    my $schema_file = $self->schema_file;
+    my ( undef, $directories, $file ) = splitpath($schema_file);
+    my $dir = catdir( $self->dir, 'openapi', $directories );
+    make_path($dir);
     write_file(
-        path      => $self->dir . '/data',
-        file      => 'openapi_schema',
+        path      => $dir,
+        file      => $file,
         document  => slurp( $self->schema_file ),
         overwrite => 1,
     );
@@ -426,10 +467,12 @@ sub _write_psgi {
         document => template(
             name     => 'psgi',
             template => $self->_psgi_template,
+            tidy     => 1,
             data     => {
                 app      => $self->app,
                 dir      => $self->dir,
                 api_base => $self->api_base,
+                doc_base => $self->doc_base,
             },
         ),
     );
@@ -451,11 +494,11 @@ sub _psgi_template {
         use lib '[% dir %]/lib';    # XXX fix me (load Net::OpenAPI::*)
 
         use [% app %];
-        [% app %]->get_app;
+
         builder {
-            mount [% api_base %] => builder {
-                [% app %]->get_app; 
-            };
+            enable "Plack::Middleware::Static", path => qr{^/openapi/.+\.(?:json|yaml)$}, root => '.';
+            mount '[% api_base %]' => builder { [% app %]->get_app };
+            mount '[% doc_base %]' => builder { [% app %]->doc_index };
         };
         [% rewrite_boundary %]
         EOF
@@ -473,6 +516,18 @@ sub _write_app {
         path     => $path,
         file     => $filename,
         document => $self->code,
+    );
+}
+
+sub _write_docs {
+    my $self = shift;
+    my $docs = $self->docs;
+    my ( $path, $filename ) = get_path_and_filename( $self->dir, $docs->package );
+
+    write_file(
+        path     => $path,
+        file     => $filename,
+        document => $docs->code,
     );
 }
 

@@ -224,9 +224,9 @@ it:
 
 	# output:
 
-    #<<<: do not touch any code between this and the end comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
+    #<<< do not touch any code between this and the end comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
     Howdy, neighbor!
-    #>>>: do not touch any code between this and the start comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
+    #>>> do not touch any code between this and the start comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
 
 You can then take the marked up document and insert it into another Perl
 document and use the rewrite mode to safely rewrite the code between the start

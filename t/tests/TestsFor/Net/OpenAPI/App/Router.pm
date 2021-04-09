@@ -7,8 +7,8 @@ use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 sub test_routing {
     my $test   = shift;
     my @routes = (
-        { path => '/pet', http_method => 'post', controller => 'My::Project::OpenAPI::Model::Pet', method => 'post' },
-        { path => '/pet', http_method => 'post', controller => 'My::Project::OpenAPI::Model::Pet', method => 'post' },
+        { path => '/pet', http_method => 'post', controller => 'My::Project::OpenAPI::Model::Pet', action => 'post' },
+        { path => '/pet', http_method => 'post', controller => 'My::Project::OpenAPI::Model::Pet', action => 'post' },
     );
     my $router = $test->class_name->new( routes => \@routes );
     my $env    = {
@@ -31,9 +31,9 @@ sub test_match {
     }
     $INC{'Example/Package/For/Dispatch.pm'} = 1;    # fake loading it
     my @routes = (
-        { path => '/get', http_method => 'get', controller => 'Example::Package::For::Dispatch', method => 'foo' },
-        { path => '/put', http_method => 'put', controller => 'Example::Package::For::Dispatch', method => 'no_such_sub' },
-        { path => '/foo', http_method => 'get', controller => 'No::Such::Package::Is::Here',     method => 'no_such_sub' },
+        { path => '/get', http_method => 'get', controller => 'Example::Package::For::Dispatch', action => 'foo' },
+        { path => '/put', http_method => 'put', controller => 'Example::Package::For::Dispatch', action => 'no_such_sub' },
+        { path => '/foo', http_method => 'get', controller => 'No::Such::Package::Is::Here',     action => 'no_such_sub' },
     );
     my $router = $test->class_name->new( routes => \@routes );
     my $env    = {
@@ -77,9 +77,9 @@ sub test_ambiguous_matches {
     }
     $INC{'Example/Package/For/Dispatch.pm'} = 1;    # fake loading it
     my @routes = (
-        { path => '/pet/findByStatus', http_method => 'get', controller => 'Example::Package::For::Dispatch', method => 'get_findByStatus' },
-        { path => '/pet/findByTags',   http_method => 'get', controller => 'Example::Package::For::Dispatch', method => 'get_findByTags' },
-        { path => '/pet/{petId}',      http_method => 'get', controller => 'Example::Package::For::Dispatch', method => 'with_args_get' },
+        { path => '/pet/findByStatus', http_method => 'get', controller => 'Example::Package::For::Dispatch', action => 'get_findByStatus' },
+        { path => '/pet/findByTags',   http_method => 'get', controller => 'Example::Package::For::Dispatch', action => 'get_findByTags' },
+        { path => '/pet/{petId}',      http_method => 'get', controller => 'Example::Package::For::Dispatch', action => 'with_args_get' },
     );
     my $router = $test->class_name->new( routes => \@routes );
     my $env    = {

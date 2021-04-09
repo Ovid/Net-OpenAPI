@@ -171,9 +171,10 @@ sub _controller_template {
 
         [% rewrite_boundary %]
         sub routes {
-            return [
-                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', action => '[% endpoint.action_name %]' },[% END %]
-            ];
+            return (
+                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', controller => '[% package %]', http_method => '[% endpoint.http_method %]', action => '[% endpoint.action_name %]' },
+                [% END %]
+            );
         }
         [% rewrite_boundary %]
 

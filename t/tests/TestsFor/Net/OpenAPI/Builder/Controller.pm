@@ -32,6 +32,7 @@ sub test_controller {
         dir         => $test->_tmpdir,
         base        => 'do::not::reuse::this::package::name::in::noncontroller::tests',
         api_base    => '/api/v1',
+        doc_base    => '/api/docs',
     );
     my $controllers = $builder->controllers;
     foreach my $controller ( @{$controllers} ) {
@@ -42,9 +43,9 @@ sub test_controller {
             eval $code;
             my $error = $@;
             ok !$error, '... and we should be able to compile it' or die "Error: $error";
-            ok my $routes = $package->routes,
+            ok my @routes = $package->routes,
               '... and we should be able to fetch our routes from the package';
-            foreach my $route (@$routes) {
+            foreach my $route (@routes) {
                 my $http_method = $route->{http_method};
                 my $path        = $route->{path};
                 my $action_name = $route->{action};

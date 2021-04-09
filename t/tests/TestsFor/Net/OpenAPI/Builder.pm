@@ -29,8 +29,10 @@ sub test_basics {
         dir         => $test->_tmpdir,
         base        => 'Some::OpenAPI::Project',
         api_base    => '/api/v1',
+        doc_base => '/api/docs',
     );
     ok $builder->write, 'We should be able to write our code';
+    explain $builder->docs->code;
 }
 
 __PACKAGE__->meta->make_immutable;
