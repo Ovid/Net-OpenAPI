@@ -4,14 +4,32 @@ package TestsFor::Net::OpenAPI::Builder::Controller;
 
 use Net::OpenAPI::Builder;
 use Net::OpenAPI::Policy;
+use Net::OpenAPI::App::StatusCodes qw(HTTPNotImplemented);
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
+
+use Net::OpenAPI::App::Types qw(
+  Directory
+);
+use File::Temp qw(tempdir);
+use File::Path qw(rmtree);
+
+has _tmpdir => (
+    is      => 'ro',
+    isa     => Directory,
+    default => tempdir('/tmp/net_open_api_XXXXXXX'),
+);
+
+sub DEMOLISH {
+    my $test = shift;
+    rmtree( $test->_tmpdir );
+}
 
 sub test_controller {
     my $test = shift;
 
     my $builder = Net::OpenAPI::Builder->new(
         schema_file => 'data/v3-petstore.json',
-        dir         => '/tmp',
+        dir         => $test->_tmpdir,
         base        => 'do::not::reuse::this::package::name::in::noncontroller::tests',
     );
     my $controllers = $builder->controllers;
@@ -28,8 +46,13 @@ sub test_controller {
             foreach my $route (@$routes) {
                 my $http_method = $route->{http_method};
                 my $path        = $route->{path};
-                my $method      = $route->{method};
-                ok $package->can($method), "'$http_method $path' should map to the existing function '$method'";
+                my $action_name = $route->{action};
+                ok my $action = $package->can($action_name), "'$http_method $path' should map to the existing function '$action_name'";
+                my $response = $action->();
+                ok $response->isa('Net::OpenAPI::App::Response'), 'Default action behavior is to return a response object';
+                is $response->status_code, HTTPNotImplemented, '... with the "not implemented" response code';
+                eq_or_diff $response->body, { error => 'Not Implemented', code => HTTPNotImplemented, info => "$http_method $path" },
+                  '... and a response body suitable for serialization into JSON';
             }
         };
     }

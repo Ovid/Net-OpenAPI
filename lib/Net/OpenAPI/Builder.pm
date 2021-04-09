@@ -252,7 +252,7 @@ has code => (
         # the sort keeps the auto-generated code deterministic. We put short paths
         # first just because it's easier to read, but we break ties by sorting on
         # the guaranteed unique names
-        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->endpoints };
+        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->action_name cmp $b->action_name } @{ $self->endpoints };
 
         return template(
             name     => 'app',
@@ -293,9 +293,7 @@ sub _app_template {
         [% END %]
 
         my $routes = [
-            [% FOREACH endpoint IN endpoints %]
-            { path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', controller => '[% base %]::Controller::[% endpoint.controller_name %]', method => '[% endpoint.method_name %]' },
-            [% END %]
+            [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', controller => '[% base %]::Controller::[% endpoint.controller_name %]', action => '[% endpoint.action_name %]' },[% END %]
         ];
 
         my $router = Net::OpenAPI::App::Router->new( routes => $routes );

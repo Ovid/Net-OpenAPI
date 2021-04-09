@@ -72,19 +72,19 @@ has errors => (
     builder => sub {
         my $self = shift;
 
-        my ( @errors, %paths_seen, %methods_seen );
+        my ( @errors, %paths_seen, %actions_seen );
         for my $endpoint ( @{ $self->endpoints } ) {
             my $path        = $endpoint->path;
             my $http_method = lc $endpoint->http_method;
-            my $method      = $endpoint->method_name;
+            my $action      = $endpoint->action_name;
 
             if ( $paths_seen{$path}{$http_method}++ ) {
                 push @errors, "Duplicate endpoint: path: $path, method: $http_method";
             }
 
             # XXX - should never happen
-            elsif ( $methods_seen{$method}++ ) {
-                push @errors, "Internal error: duplicate generated method: $method";
+            elsif ( $actions_seen{$action}++ ) {
+                push @errors, "Internal error: duplicate generated action: $action";
             }
         }
 
@@ -124,7 +124,7 @@ has code => (
         # the sort keeps the auto-generated code deterministic. We put short paths
         # first just because it's easier to read, but we break ties by sorting on
         # the guaranteed unique generated method names
-        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->method_name cmp $b->method_name } @{ $self->endpoints };
+        my @endpoints = sort { length( $a->path ) <=> length( $b->path ) || $a->action_name cmp $b->action_name } @{ $self->endpoints };
 
         return tidy_code(
             template(
@@ -172,7 +172,7 @@ sub _controller_template {
         [% rewrite_boundary %]
         sub routes {
             return [
-                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', method => '[% endpoint.method_name %]' },[% END %]
+                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', http_method => '[% endpoint.http_method %]', action => '[% endpoint.action_name %]' },[% END %]
             ];
         }
         [% rewrite_boundary %]

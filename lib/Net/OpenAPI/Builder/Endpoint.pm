@@ -128,13 +128,13 @@ The Controller module that should contain this endpoint.
 
 POLICY: The Controller is determined by the top-level path component in the C<path>
 
-=head2 method_name
+=head2 action_name
 
-Generated/mangled method name for this endpoint
+Generated/mangled action name for this endpoint
 
-=ehad2 method_args
+=head2 action_args
 
-Args for this endpoint
+Args for this endpoint action
 
 =cut
 
@@ -142,8 +142,8 @@ has _method_info => (
     is  => 'lazy',
     isa => Dict [
         controller_name => PackageName,
-        method_name     => MethodName,
-        method_args     => ArrayRef,
+        action_name     => MethodName,
+        action_args     => ArrayRef,
     ],
     builder => sub {
         my $self = shift;
@@ -152,40 +152,40 @@ has _method_info => (
         my ( $controller, @path ) = grep {/\S/} split m{/} => $self->path;
         $controller = ucfirst normalize_string($controller);
 
-        my $method = lc $self->http_method;
+        my $action = lc $self->http_method;
 
         my @args;
         foreach my $element (@path) {
             if ( $element =~ /^{(?<arg>\w+)}$/ ) {
                 push @args => $+{arg};
-                $method .= '___';
+                $action .= '___';
             }
-            elsif ( $method =~ /_$/ ) {
-                $method .= $element;
+            elsif ( $action =~ /_$/ ) {
+                $action .= $element;
             }
             else {
-                $method .= "_$element";
+                $action .= "_$element";
             }
         }
         if (@args) {
-            $method = "with_args_$method";
+            $action = "with_args_$action";
         }
-        $method =~ s/_+$//;
-        $method =~ s/-/_/g;
+        $action =~ s/_+$//;
+        $action =~ s/-/_/g;
 
         return {
             controller_name => $controller,
-            method_name     => $method,
-            method_args     => \@args,
+            action_name     => $action,
+            action_args     => \@args,
         };
     },
 );
 
 sub controller_name { shift->_method_info->{controller_name} }
 
-sub method_name { shift->_method_info->{method_name} }
+sub action_name { shift->_method_info->{action_name} }
 
-sub method_args { shift->_method_info->{method_args} }
+sub action_args { shift->_method_info->{action_args} }
 
 =head1 OUTPUT ATTRIBUTES
 

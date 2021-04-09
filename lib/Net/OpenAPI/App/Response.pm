@@ -33,3 +33,20 @@ sub to_json {
 # https://swagger.io/docs/specification/data-models/representing-xml/
 
 1;
+
+__END__
+
+=head1 METHODS
+
+=head2 C<status_code>
+
+    my $code = $response->status_code;
+
+Returns the numeric HTTP status code for this response.
+
+=head2 C<body>
+
+
+    my $body = $response->body;
+
+Optional. If present, it's a hashref with the response body.
