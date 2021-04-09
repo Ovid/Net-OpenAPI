@@ -6,14 +6,16 @@ use Net::OpenAPI::Builder;
 use Getopt::Long;
 GetOptions(
     'schema=s' => \( my $schema    = 'data/v3-petstore.json' ),
+    'base=s'   => \( my $base      = 'My::Project::OpenAPI' ),
     'dir=s'    => \( my $directory = 'target' ),
-    'base=s'   => \( my $base      = 'My::Project::OpenAPI' )
+    'api_base' => \( my $api_base  = '/api/v1' ),
 ) or die "Bad Options";
 
 my $builder = Net::OpenAPI::Builder->new(
     schema_file => $schema,
     base        => $base,
     dir         => $directory,
+    api_base    => $api_base,
 );
 $builder->write;
 
@@ -34,16 +36,18 @@ schema. You can change any or all of those:
     perl -Ilib write.pl --dir /tmp
     perl -Ilib write.pl --base My::OpenAPI::Project
     perl -Ilib write.pl --schema my-schema.json
+    perl -Ilib write.pl --api_base /path/to/my/api
 
-Currently it only understands V3 JSON schemas (easy to fix).
+Currently it only understands V3 JSON schemas (easy to fix?).
 
 After it's done, assuming the schema was good, you can C<cd> into the target
 directoryand run plackup C<script/app.psgi> and then:
 
-    $ curl -v http://0:5000/pet/23
+    $ curl -v http://0:5000/api/v1/pet/23
 
-You will get an Unimplemented error. Edit C<lib/My/Project/OpenAPI/Model/Pet.pm>
-to return the desired data structure and restart plack.
+You will get an Unimplemented error. Edit
+C<lib/My/Project/OpenAPI/Controller/Pet.pm> to return the desired data
+structure and restart plack.
 
 Currently we don't yet validate input or output (coming soon).
 

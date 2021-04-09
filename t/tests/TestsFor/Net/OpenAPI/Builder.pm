@@ -28,6 +28,7 @@ sub test_basics {
         schema_file => 'data/v3-petstore.json',
         dir         => $test->_tmpdir,
         base        => 'Some::OpenAPI::Project',
+        api_base    => '/api/v1',
     );
     ok $builder->write, 'We should be able to write our code';
 }

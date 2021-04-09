@@ -31,6 +31,7 @@ sub test_controller {
         schema_file => 'data/v3-petstore.json',
         dir         => $test->_tmpdir,
         base        => 'do::not::reuse::this::package::name::in::noncontroller::tests',
+        api_base    => '/api/v1',
     );
     my $controllers = $builder->controllers;
     foreach my $controller ( @{$controllers} ) {

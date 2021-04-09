@@ -25,6 +25,7 @@ use Net::OpenAPI::App::Types qw(
   HashRef
   InstanceOf
   NonEmptyStr
+  OpenAPIPath
   PackageName
 );
 use namespace::autoclean;
@@ -64,6 +65,18 @@ Directory for generated code
 has dir => (
     is       => 'ro',
     isa      => Directory,
+    required => 1,
+);
+
+=head2 api_base
+
+Base path for openapi directories. (e.g., C</api/v1>);
+
+=cut
+
+has api_base => (
+    is       => 'ro',
+    isa      => OpenAPIPath,
     required => 1,
 );
 
@@ -441,8 +454,9 @@ sub _write_psgi {
             name     => 'psgi',
             template => $self->_psgi_template,
             data     => {
-                app => $self->app,
-                dir => $self->dir,
+                app      => $self->app,
+                dir      => $self->dir,
+                api_base => $self->api_base,
             },
         ),
     );
@@ -458,11 +472,18 @@ sub _psgi_template {
         [% rewrite_boundary %]
         use strict;
         use warnings;
-        use lib 'lib'; # XXX fix me (load Net::OpenAPI::*)
-        use lib '[% dir %]/lib'; # XXX fix me (load Net::OpenAPI::*)
+        use Plack::Builder;
+        use lib 'lib';              # XXX fix me (load Net::OpenAPI::*)
+        use lib '../lib';           # XXX fix me (load Net::OpenAPI::*)
+        use lib '[% dir %]/lib';    # XXX fix me (load Net::OpenAPI::*)
 
         use [% app %];
         [% app %]->get_app;
+        builder {
+            mount [% api_base %] => builder {
+                [% app %]->get_app; 
+            };
+        };
         [% rewrite_boundary %]
         EOF
 
