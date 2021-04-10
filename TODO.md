@@ -1,6 +1,4 @@
-* Writing dispatch classes(https://github.com/miyagawa/plack-dispatching-samples/blob/master/http-router-declare.psgi)
-* Server program
-* Document generation (https://nordicapis.com/7-open-source-openapi-documentation-generators/)
+* Switch to https://metacpan.org/pod/Path::Router
 * Testing
 * Logging
 * XML: https://swagger.io/docs/specification/data-models/representing-xml/
@@ -15,7 +13,7 @@
 * App and API keys
 * API dependencies
     - Api registry/repository
-* API Gateway handling:
+* API Gateway handling (?)
     - authentication
     - control
     - load distribution
