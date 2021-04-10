@@ -6,30 +6,14 @@ use Net::OpenAPI::Builder;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::StatusCodes qw(HTTPNotImplemented);
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
-
-use Net::OpenAPI::App::Types qw(
-  Directory
-);
-use File::Temp qw(tempdir);
-use File::Path qw(rmtree);
-
-has _tmpdir => (
-    is      => 'ro',
-    isa     => Directory,
-    default => tempdir('/tmp/net_open_api_XXXXXXX'),
-);
-
-sub DEMOLISH {
-    my $test = shift;
-    rmtree( $test->_tmpdir );
-}
+with 'Test::Net::OpenAPI::Role::Tempdir';
 
 sub test_controller {
     my $test = shift;
 
     my $builder = Net::OpenAPI::Builder->new(
         schema_file => 'data/v3-petstore.json',
-        dir         => $test->_tmpdir,
+        dir         => $test->tempdir,
         base        => 'do::not::reuse::this::package::name::in::noncontroller::tests',
         api_base    => '/api/v1',
         doc_base    => '/api/docs',
