@@ -9,20 +9,21 @@ use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 sub test_path_rewriting {
     my $test     = shift;
     my %path_for = (
-        '/pet/'                  => '/pet/',
-        '/pet/find-by-status'    => '/pet/find-by-status',
-        '/pet/findByStatus'      => '/pet/findByStatus',
-        '/pet/findByTags'        => '/pet/findByTags',
-        '/pet/{petId}'           => '/pet/:petId',
-        '/store/inventory'       => '/store/inventory',
-        '/store/order'           => '/store/order',
-        '/store/order/'          => '/store/order/',
-        '/store/order/{orderId}' => '/store/order/:orderId',
-        '/user/login'            => '/user/login',
-        '/user/logout'           => '/user/logout',
-        '/user/{username}'       => '/user/:username',
-        '/시티'                    => '/시티',
-        '/日本/{city}'             => '/日本/:city',
+        '/pet/'                   => '/pet/',
+        '/pet/find-by-status'     => '/pet/find-by-status',
+        '/pet/findByStatus'       => '/pet/findByStatus',
+        '/pet/findByTags'         => '/pet/findByTags',
+        '/pet/{petId}'            => '/pet/:petId',
+        '/pet/{petId}/and/{more}' => '/pet/:petId/and/:more',
+        '/store/inventory'        => '/store/inventory',
+        '/store/order'            => '/store/order',
+        '/store/order/'           => '/store/order/',
+        '/store/order/{orderId}'  => '/store/order/:orderId',
+        '/user/login'             => '/user/login',
+        '/user/logout'            => '/user/logout',
+        '/user/{username}'        => '/user/:username',
+        '/시티'                     => '/시티',
+        '/日本/{city}'              => '/日本/:city',
     );
     while ( my ( $before, $after ) = each %path_for ) {
         is openapi_to_path_router($before), $after, "'$before' should convert to '$after'";
