@@ -6,6 +6,29 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Core ':all';
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 
+sub test_path_rewriting {
+    my $test     = shift;
+    my %path_for = (
+        '/pet/'                  => '/pet/',
+        '/pet/find-by-status'    => '/pet/find-by-status',
+        '/pet/findByStatus'      => '/pet/findByStatus',
+        '/pet/findByTags'        => '/pet/findByTags',
+        '/pet/{petId}'           => '/pet/:petId',
+        '/store/inventory'       => '/store/inventory',
+        '/store/order'           => '/store/order',
+        '/store/order/'          => '/store/order/',
+        '/store/order/{orderId}' => '/store/order/:orderId',
+        '/user/login'            => '/user/login',
+        '/user/logout'           => '/user/logout',
+        '/user/{username}'       => '/user/:username',
+        '/시티'                    => '/시티',
+        '/日本/{city}'             => '/日本/:city',
+    );
+    while ( my ( $before, $after ) = each %path_for ) {
+        is openapi_to_path_router($before), $after, "'$before' should convert to '$after'";
+    }
+}
+
 sub test_resolve_method {
     my $test = shift;
 
@@ -60,12 +83,14 @@ sub test_resolve_method {
             }
             is $package, $expected_package,
               "$http_method $path should give us the correct package: $expected_package";
-            is $subname,       $expected_method, "... and it should give us the correct method: $expected_method";
+            is $subname,      $expected_method, "... and it should give us the correct method: $expected_method";
             eq_or_diff $args, $expected_args,   "... and it should give us the correct arguments: @$expected_args";
             my $endpoint = "$http_method $path";
-            my ( $subname2, $args2 ) = resolve_endpoint($endpoint);
-            is $subname2, $subname, 'resolve_endpoint($endpoint) should resolve the endpoint name';
-            eq_or_diff $args2, $args, '... and the args';
+            my ( $http_method2, $path2, $subname2, $args2 ) = resolve_endpoint($endpoint);
+            is $subname2,      $subname,     'resolve_endpoint($endpoint) should resolve the endpoint name';
+            eq_or_diff $args2, $args,        '... and the args';
+            is $http_method2,  $http_method, '... and the http method';
+            is $path2,         $path,        '... and the path';
         }
     }
 }
@@ -111,7 +136,7 @@ END
       # and this
     END
     throws_ok { unindent($bad_indent) }
-      qr/\Qunindent() failed with line found with indentation less than '4'/,
+    qr/\Qunindent() failed with line found with indentation less than '4'/,
       'Unindenting anything with a line whose leading whitespaces are less than first line should fail';
 }
 1;

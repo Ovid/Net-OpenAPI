@@ -21,6 +21,7 @@ our @EXPORT_OK = qw(
   get_path_and_filename
   get_path_prefix
   normalize_string
+  openapi_to_path_router
   resolve_method
   resolve_endpoint
   resolve_package
@@ -115,11 +116,27 @@ sub resolve_root {
     return ucfirst normalize_string($root);
 }
 
+=head2 C<openapi_to_path_router($openapi_path)>
+
+    my $path = openapi_to_path_router('/pet/{petID}');
+    # /pet/:petId
+
+Converts the OpenAPI path spec to a format that L<Path::Router>, L<Dancer2> and
+other common Perl tools recognize.
+
+=cut
+
+sub openapi_to_path_router {
+    my $path = shift;
+    $path =~ s/{([^\/}]+)}/:$1/g;
+    return $path;
+}
+
 =head2 C<resolve_endpoint>
 
-    my ( $method, $args ) = resolve_method("get /store/order/{orderId}");
+    my ( $http_method, $path, $method, $args ) = resolve_method("get /store/order/{orderId}");
 
-Like C<resolve_method>, but takes an endpoint name.
+Similar to C<resolve_method>, but takes an endpoint name.
 
 =cut
 
@@ -127,9 +144,8 @@ sub resolve_endpoint {
     my $endpoint = shift;
     my ( $http_method, $path ) = split /\s+/ => trim($endpoint), 2;
     $http_method = lc $http_method;
-    return resolve_method( $http_method, $path );
+    return ( $http_method, $path, resolve_method( $http_method, $path ) );
 }
-
 
 =head2 C<resolve_method($http_method, $path)>
 
