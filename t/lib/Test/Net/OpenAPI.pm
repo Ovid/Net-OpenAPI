@@ -4,9 +4,16 @@ package Test::Net::OpenAPI;
 
 # vim: textwidth=200
 
+use Test::Builder;
 use Test::Class::Moose;
 use Net::OpenAPI::Policy;
 with 'Test::Class::Moose::Role::AutoUse';
+
+has builder => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { Test::Builder->new }
+);
 
 =head2 C<is_multiline_text>
 
@@ -24,6 +31,23 @@ sub is_multiline_text {
     my @text     = split /\n/ => $text;
     my @expected = split /\n/ => $expected;
     eq_or_diff \@text, \@expected, $message;
+}
+
+sub todo_start {
+    my ( $test, $message ) = @_;
+    $test->builder->todo_start( $message || 'No TODO message supplied' );
+}
+
+sub todo_end {
+    my $test = shift;
+    $test->builder->todo_end;
+}
+
+sub test_teardown {
+    my $test = shift;
+    if ( $test->builder->in_todo ) {
+        $test->todo_end;
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
