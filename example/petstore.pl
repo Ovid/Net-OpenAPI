@@ -19,27 +19,27 @@ my $builder = Net::OpenAPI::Builder->new(
     api_base    => $api_base,
     doc_base    => $doc_base,
 );
-$builder->write;
+$builder->petstore;
 
 __END__
 
 =head1 NAME
 
-write.pl - Sample openapi server generator
+petstore.pl - Sample openapi server generator based on canonical OpenAPI Petstore
 
 =head1 SYNOPSIS
 
-    perl -Ilib write.pl
+    perl -Ilib petstore.pl
 
 Builds out an OpenAPI server app shell in the C<target/>, directory,
 with a basename of 'My::Project::OpenAPI", using the C<data/v3-petstore.json>
 schema. You can change any or all of those:
 
-    perl -Ilib write.pl --dir /tmp
-    perl -Ilib write.pl --base My::OpenAPI::Project
-    perl -Ilib write.pl --schema my-schema.json
-    perl -Ilib write.pl --api_base /path/to/my/api
-    perl -Ilib write.pl --doc_base /path/to/my/api/docs
+    perl -Ilib petstore.pl --dir /tmp
+    perl -Ilib petstore.pl --base My::OpenAPI::Project
+    perl -Ilib petstore.pl --schema my-schema.json
+    perl -Ilib petstore.pl --api_base /path/to/my/api
+    perl -Ilib petstore.pl --doc_base /path/to/my/api/docs
 
 Currently it only understands V3 JSON schemas (easy to fix?).
 
@@ -54,5 +54,5 @@ structure and restart plack.
 
 Currently we don't yet validate input or output (coming soon).
 
-If you rerun C<write.pl>, it will I<not> overwrite the local changes you have made to
+If you rerun C<petstore.pl>, it will I<not> overwrite the local changes you have made to
 the endpoints.
