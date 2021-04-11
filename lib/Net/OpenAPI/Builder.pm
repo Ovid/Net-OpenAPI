@@ -64,9 +64,10 @@ Directory for generated code
 
 =cut
 
+# The File::Temp::Dir is for tests
 has dir => (
     is       => 'ro',
-    isa      => Directory,
+    isa      => Directory | InstanceOf ['File::Temp::Dir'],
     required => 1,
 );
 
