@@ -54,14 +54,18 @@ sub test_resolve_method {
             my ( $expected_package, $expected_method, $expected_args ) = @{ $result_for{$path} };
             $expected_args //= [];
             my $package = resolve_package( 'My::Project', 'Model', $path );
-            my ( $method, $args ) = resolve_method( $http_method, $path );
-            if ( $seen{$http_method}{$path}{$package}{$method}++ ) {
-                croak("Oops! We already saw &$package\::$method via $http_method $path");
+            my ( $subname, $args ) = resolve_method( $http_method, $path );
+            if ( $seen{$http_method}{$path}{$package}{$subname}++ ) {
+                croak("Oops! We already saw &$package\::$subname via $http_method $path");
             }
             is $package, $expected_package,
               "$http_method $path should give us the correct package: $expected_package";
-            is $method,       $expected_method, "... and it should give us the correct method: $expected_method";
+            is $subname,       $expected_method, "... and it should give us the correct method: $expected_method";
             eq_or_diff $args, $expected_args,   "... and it should give us the correct arguments: @$expected_args";
+            my $endpoint = "$http_method $path";
+            my ( $subname2, $args2 ) = resolve_endpoint($endpoint);
+            is $subname2, $subname, 'resolve_endpoint($endpoint) should resolve the endpoint name';
+            eq_or_diff $args2, $args, '... and the args';
         }
     }
 }

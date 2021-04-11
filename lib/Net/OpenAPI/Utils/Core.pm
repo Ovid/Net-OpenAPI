@@ -22,6 +22,7 @@ our @EXPORT_OK = qw(
   get_path_prefix
   normalize_string
   resolve_method
+  resolve_endpoint
   resolve_package
   resolve_root
   tidy_code
@@ -114,7 +115,23 @@ sub resolve_root {
     return ucfirst normalize_string($root);
 }
 
-=head2 C<resolve_method($package_base, $http_method, $path)>
+=head2 C<resolve_endpoint>
+
+    my ( $method, $args ) = resolve_method("get /store/order/{orderId}");
+
+Like C<resolve_method>, but takes an endpoint name.
+
+=cut
+
+sub resolve_endpoint {
+    my $endpoint = shift;
+    my ( $http_method, $path ) = split /\s+/ => trim($endpoint), 2;
+    $http_method = lc $http_method;
+    return resolve_method( $http_method, $path );
+}
+
+
+=head2 C<resolve_method($http_method, $path)>
 
     my ( $method, $args ) = resolve_method(
         'get',  # or GET (http method)

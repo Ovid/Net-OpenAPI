@@ -176,6 +176,20 @@ sub _controller_template {
                 [% END %]
             );
         }
+
+        sub routes_2 {
+            my %routes;
+            foreach my $route ( routes() ) {
+                my $path   = $route->{path};
+                my $method = $route->{http_method};
+                my $action = $route->{action};
+
+                $routes{$path}{$method} = {
+                    controller => '[% package %]',
+                    action     => $action,
+                };
+            }
+        }
         [% rewrite_boundary %]
 
         =head1 ROUTES
