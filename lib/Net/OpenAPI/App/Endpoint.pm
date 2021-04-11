@@ -6,6 +6,7 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Core qw(trim);
 use Net::OpenAPI::Utils::Core qw(
   resolve_endpoint
+  openapi_to_path_router
 );
 
 use Sub::Name;
@@ -16,7 +17,7 @@ sub import {
     my $caller   = caller;
     my $endpoint = sub {
         my ( $name,          $sub )  = @_;
-        my ( $function_name, $args ) = resolve_endpoint($name);
+        my ( $http_method, $path, $function_name, $args ) = resolve_endpoint($name);
         print STDERR "# Installing endpoint '$name' into $caller as '$function_name'\n" if $arg_for{debug};
         subname "endpoint: $name" => $sub;
         install_sub(
@@ -37,20 +38,27 @@ sub import {
     install_sub(
         {
             code => sub {
-                my $endpoint = shift;
-                my ( $function_name, undef ) = resolve_endpoint($endpoint);
-                my $fq_name = "${caller}::${function_name}";
-                print STDERR "# Attemping to resolve endpoint '$endpoint' from $caller as '$function_name'\n" if $arg_for{debug};
-                no strict 'refs';
-                if ( defined( my $coderef = *{$fq_name}{CODE} ) ) {
-                    return $coderef;
+                my @endpoints = @_;
+
+                my %routes;
+                foreach my $endpoint (@endpoints) {
+                    my $endpoint = shift;
+                    my ( $http_method, $path, $function_name, undef ) = resolve_endpoint($endpoint);
+                    $path = openapi_to_path_router($path);
+                    my $fq_name = "${caller}::${function_name}";
+                    print STDERR "# Attemping to resolve endpoint '$endpoint' from $caller as '$function_name'\n" if $arg_for{debug};
+                    no strict 'refs';
+                    if ( defined( my $coderef = *{$fq_name}{CODE} ) ) {
+                        $routes{$path}{$http_method} = $coderef;
+                    }
+                    else {
+                        croak("Cannot dispatch to non-existent endpoint '$endpoint'");
+                    }
                 }
-                else {
-                    croak("Cannot dispatch to non-existent endpoint '$endpoint'");
-                }
-            },
+                return \%routes;
+              },
             into => $caller,
-            as   => 'resolve_endpoint',
+            as   => 'resolve_endpoints',
         }
     );
 }
@@ -77,8 +85,9 @@ __END__
 
 =head1 DESCRIPTION
 
-This module automatically exports two functions, C<endpoint> for declaring the subroutine that
-handles an endpoint, and C<resolve_endpoint>, which returns the declared subroutine.
+This module automatically exports two functions, C<endpoint> for declaring the
+subroutine that handles an endpoint, and C<resolve_endpoints>, which returns
+the declared subroutine.
 
 =head1 FUNCTIONS
 

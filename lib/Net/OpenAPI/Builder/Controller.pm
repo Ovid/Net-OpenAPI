@@ -171,24 +171,10 @@ sub _controller_template {
 
         [% rewrite_boundary %]
         sub routes {
-            return (
-                [% FOREACH endpoint IN endpoints %]{ path => '[% endpoint.path %]', controller => '[% package %]', http_method => '[% endpoint.http_method %]', action => '[% endpoint.action_name %]' },
+            return resolve_endpoints(
+                [% FOREACH endpoint IN endpoints %]'[% endpoint.http_method %] [% endpoint.path %]',
                 [% END %]
             );
-        }
-
-        sub routes_2 {
-            my %routes;
-            foreach my $route ( routes() ) {
-                my $path   = $route->{path};
-                my $method = $route->{http_method};
-                my $action = $route->{action};
-
-                $routes{$path}{$method} = {
-                    controller => '[% package %]',
-                    action     => $action,
-                };
-            }
         }
         [% rewrite_boundary %]
 

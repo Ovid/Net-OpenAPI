@@ -333,14 +333,13 @@ sub _app_template {
         sub get_app {
             return sub {
                 my $req   = Plack::Request->new(shift);
-                my $match = $router->match($req)
+                my ( $action, $match ) = $router->match($req)
                   or return $req->new_response(404)->finalize;
         
-                my $dispatcher = $match->{dispatch};
                 my $res        = $req->new_response(200);
                 $res->content_type('application/json');
                 my $result;
-                if ( eval { $result = $dispatcher->( $req, $match->{uri_params} ); 1 } ) {
+                if ( eval { $result = $action->( $req, $match ); 1 } ) {
         
                     if ( blessed $result && $result->isa('Net::OpenAPI::App::Response') ) {
         
