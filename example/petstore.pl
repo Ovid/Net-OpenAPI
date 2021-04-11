@@ -19,7 +19,7 @@ my $builder = Net::OpenAPI::Builder->new(
     api_base    => $api_base,
     doc_base    => $doc_base,
 );
-$builder->petstore;
+$builder->write;
 
 __END__
 
