@@ -5,6 +5,9 @@ package TestsFor::Net::OpenAPI::Builder::Controller;
 use Net::OpenAPI::Builder;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::StatusCodes qw(HTTPNotImplemented);
+use Net::OpenAPI::Utils::Core qw(
+  path_router_to_openapi
+);
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 with 'Test::Net::OpenAPI::Role::Tempdir';
 
@@ -27,18 +30,18 @@ sub test_controller {
             eval $code;
             my $error = $@;
             ok !$error, '... and we should be able to compile it' or die "Error: $error";
-            ok my @routes = $package->routes,
+            ok my $routes = $package->routes,
               '... and we should be able to fetch our routes from the package';
-            foreach my $route (@routes) {
-                my $http_method = $route->{http_method};
-                my $path        = $route->{path};
-                my $action_name = $route->{action};
-                ok my $action = $package->can($action_name), "'$http_method $path' should map to the existing function '$action_name'";
-                my $response = $action->();
-                ok $response->isa('Net::OpenAPI::App::Response'), 'Default action behavior is to return a response object';
-                is $response->status_code, HTTPNotImplemented, '... with the "not implemented" response code';
-                eq_or_diff $response->body, { error => 'Not Implemented', code => HTTPNotImplemented, info => "$http_method $path" },
-                  '... and a response body suitable for serialization into JSON';
+            foreach my $path ( keys %$routes ) {
+                my $dispatch = $routes->{$path};
+                foreach my $method ( keys %$dispatch ) {
+                    my $action   = $dispatch->{$method};
+                    my $response = $action->();
+                    ok $response->isa('Net::OpenAPI::App::Response'), 'Default action behavior is to return a response object';
+                    is $response->status_code, HTTPNotImplemented, '... with the "not implemented" response code';
+                    eq_or_diff $response->body, { error => 'Not Implemented', code => HTTPNotImplemented, info => path_router_to_openapi("$method $path" )},
+                      '... and a response body suitable for serialization into JSON';
+                }
             }
         };
     }

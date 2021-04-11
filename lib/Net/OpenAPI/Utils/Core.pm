@@ -22,8 +22,9 @@ our @EXPORT_OK = qw(
   get_path_prefix
   normalize_string
   openapi_to_path_router
-  resolve_method
+  path_router_to_openapi
   resolve_endpoint
+  resolve_method
   resolve_package
   resolve_root
   tidy_code
@@ -129,6 +130,21 @@ other common Perl tools recognize.
 sub openapi_to_path_router {
     my $path = shift;
     $path =~ s/{([^\/}]+)}/:$1/g;
+    return $path;
+}
+
+=head2 C<path_router_to_openapi>
+
+    my $path = openapi_to_path_router('/pet/:petID');
+    # /pet/{petId}
+
+Reverses the process of C<openapi_to_path_router>.
+
+=cut
+
+sub path_router_to_openapi {
+    my $path = shift;
+    $path =~ s/\/:([^\/;]+)/\/{$1}/g;
     return $path;
 }
 

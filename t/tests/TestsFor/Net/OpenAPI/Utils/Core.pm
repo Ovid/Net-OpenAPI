@@ -26,7 +26,8 @@ sub test_path_rewriting {
         '/日本/{city}'              => '/日本/:city',
     );
     while ( my ( $before, $after ) = each %path_for ) {
-        is openapi_to_path_router($before), $after, "'$before' should convert to '$after'";
+        is openapi_to_path_router($before), $after,  "openapi_to_path_router: '$before' should convert to '$after'";
+        is path_router_to_openapi($after),  $before, "path_router_to_openapi: '$after' should convert to '$before'";
     }
 }
 
