@@ -10,6 +10,7 @@ GetOptions(
     'dir=s'      => \( my $directory = 'target' ),
     'api_base=s' => \( my $api_base  = '/api/v1' ),
     'doc_base=s' => \( my $doc_base  = '/api/docs' ),
+    'overwrite'  => \( my $overwrite = 0 ),
 ) or die "Bad Options";
 
 my $builder = Net::OpenAPI::Builder->new(
@@ -18,6 +19,7 @@ my $builder = Net::OpenAPI::Builder->new(
     dir         => $directory,
     api_base    => $api_base,
     doc_base    => $doc_base,
+    overwrite   => $overwrite,
 );
 $builder->write;
 
@@ -29,17 +31,18 @@ petstore.pl - Sample openapi server generator based on canonical OpenAPI Petstor
 
 =head1 SYNOPSIS
 
-    perl -Ilib petstore.pl
+    perl -Ilib example/petstore.pl
 
 Builds out an OpenAPI server app shell in the C<target/>, directory,
 with a basename of 'My::Project::OpenAPI", using the C<data/v3-petstore.json>
 schema. You can change any or all of those:
 
-    perl -Ilib petstore.pl --dir /tmp
-    perl -Ilib petstore.pl --base My::OpenAPI::Project
-    perl -Ilib petstore.pl --schema my-schema.json
-    perl -Ilib petstore.pl --api_base /path/to/my/api
-    perl -Ilib petstore.pl --doc_base /path/to/my/api/docs
+    perl -Ilib example/petstore.pl --dir /tmp
+    perl -Ilib example/petstore.pl --base My::OpenAPI::Project
+    perl -Ilib example/petstore.pl --schema my-schema.json
+    perl -Ilib example/petstore.pl --api_base /path/to/my/api
+    perl -Ilib example/petstore.pl --doc_base /path/to/my/api/docs
+    perl -Ilib example/petstore.pl --overwrite
 
 Currently it only understands V3 JSON schemas (easy to fix?).
 
@@ -51,6 +54,10 @@ directoryand run plackup C<script/app.psgi> and then:
 You will get an Unimplemented error. Edit
 C<lib/My/Project/OpenAPI/Controller/Pet.pm> to return the desired data
 structure and restart plack.
+
+If you wish to see the full documentation for your project, visit:
+
+    http://0:5000/api/docs
 
 Currently we don't yet validate input or output (coming soon).
 
