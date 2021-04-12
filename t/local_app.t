@@ -16,6 +16,10 @@ BEGIN {
 We use the builder to deliberately rewrite our test application every time
 this test is run. That way, we can verify that local changes we make to the
 application are not overwritten.
+
+Note: if we've done this correctly, this should result in *no* changes to the
+files. If git says something has changed in t/test_app/ and we weren't expecting
+it, it's time to investigate.
 END
     Net::OpenAPI::Builder->new(
         schema_file => 'data/v3-petstore.json',
