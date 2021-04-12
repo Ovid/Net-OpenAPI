@@ -4,6 +4,7 @@ package TestsFor::Net::OpenAPI::App::Validator;
 
 use Net::OpenAPI::Policy;
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
+with 'Test::Net::OpenAPI::Role::Request';
 
 use Net::OpenAPI::Utils::File qw(slurp);
 use Net::OpenAPI::App::JSON qw(decode_json);
@@ -97,6 +98,18 @@ sub test_parameters_for_request_and_response {
     };
     eq_or_diff $request_params->[0]{content}{'application/json'}{schema}{properties}, $expected,
       'We should be able to fetch fully expanded parameters from our schema';
+}
+
+sub test_validation {
+    my $test = shift;
+    my $req = $test->get_request( get => '/api/v1/pet/asdf' );
+    ok my $validator = $test->class_name->new( json => 'data/v3-petstore.json' ),
+      'We should be able to create our validator object';
+    my @data = $req->validation_data;
+    $data[-1]{path} = { petId => 'asdf' };
+    my @response = $validator->_validator->validate_request(@data);
+    explain \@response;
+    explain \@data;
 }
 
 __PACKAGE__->meta->make_immutable;

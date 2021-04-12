@@ -69,4 +69,15 @@ eq_or_diff decode_json( $res->content ), $expected, '... and get the correct dat
 ok $res = $plack->request( PUT '/api/pet/3' ), 'We should be able to send a message to a non-existent route';
 is $res->code, HTTPNotFound, '... but get a Not Found error';
 
+#send raw data
+ok $res = $plack->request( POST '/api/v1/pet', Content_Type => 'application/JSon', Content => "{'foo':7}" ), 'We should be able to try to fetch a pet';
+is $res->code, HTTPNotImplemented, '... and it should not be implemented yet';
+
+# send url_encoded
+ok $res = $plack->request( POST '/api/v1/pet', Content => [ url_encoded => '1234567890' ] ), 'We should be able to try to fetch a pet';
+is $res->code, HTTPNotImplemented, '... and it should not be implemented yet';
+
+# send multipart/formdata
+ok $res = $plack->request( POST '/api/v1/pet?foo=bar', Content_Type => 'form-data', Content => [ url_encoded => '1234567890' ] ),
+  'We should be able to try to fetch a pet';
 done_testing;
