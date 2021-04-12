@@ -2,13 +2,14 @@ package My::Project::OpenAPI::App;
 
 use lib '../../lib';
 
-#<<< do not touch any code between this and the end comment. Checksum: 1568a3de854db817949d4a9201e056ca
+#<<< do not touch any code between this and the end comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
 use v5.16.0;
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
-use Mojo::JSON qw(encode_json);
 use Plack::Request;
+
+use Net::OpenAPI::App::JSON qw(encode_json);
 use Net::OpenAPI::App::Router;
 use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPInternalServerError);
 use My::Project::OpenAPI::App::Docs;
@@ -65,7 +66,7 @@ sub doc_index {
         return My::Project::OpenAPI::App::Docs->index($req)
     };
 }
-#>>> do not touch any code between this and the start comment. Checksum: 1568a3de854db817949d4a9201e056ca
+#>>> do not touch any code between this and the start comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
 
 
 1;

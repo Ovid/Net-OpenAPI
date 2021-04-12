@@ -3,7 +3,7 @@ package Net::OpenAPI::App::Response;
 # ABSTRACT: Net::OpenAPI responses
 
 use Moo;
-use Mojo::JSON 'encode_json';
+use Net::OpenAPI::App::JSON 'encode_json';
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
   HashRef

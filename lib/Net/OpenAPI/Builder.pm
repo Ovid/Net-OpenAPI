@@ -5,15 +5,15 @@ package Net::OpenAPI::Builder;
 use Moo;
 use File::Path qw(make_path);
 use File::Spec::Functions qw(splitpath catdir);
-use Mojo::JSON qw(decode_json);
 
-use Net::OpenAPI::Policy;
-use Net::OpenAPI::Builder::Controller;
-use Net::OpenAPI::Builder::Endpoint;
-use Net::OpenAPI::Builder::Docs;
-use Net::OpenAPI::Utils::Template qw(template write_template);
-use Net::OpenAPI::Utils::File qw(slurp write_file);
+use Net::OpenAPI::App::JSON qw(decode_json);
 use Net::OpenAPI::App::Validator;
+use Net::OpenAPI::Builder::Controller;
+use Net::OpenAPI::Builder::Docs;
+use Net::OpenAPI::Builder::Endpoint;
+use Net::OpenAPI::Policy;
+use Net::OpenAPI::Utils::File qw(slurp write_file);
+use Net::OpenAPI::Utils::Template qw(template write_template);
 
 use Net::OpenAPI::Utils::Core qw(
   get_path_and_filename
@@ -316,8 +316,9 @@ sub _app_template {
         use strict;
         use warnings;
         use Scalar::Util 'blessed';
-        use Mojo::JSON qw(encode_json);
         use Plack::Request;
+        
+        use Net::OpenAPI::App::JSON qw(encode_json);
         use Net::OpenAPI::App::Router;
         use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPInternalServerError);
         use [% docs %];

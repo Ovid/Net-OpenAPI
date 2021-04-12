@@ -6,7 +6,7 @@ use Net::OpenAPI::Policy;
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 
 use Net::OpenAPI::Utils::File qw(slurp);
-use Mojo::JSON qw(decode_json);
+use Net::OpenAPI::App::JSON qw(decode_json);
 
 sub test_serialization {
     my $test       = shift;

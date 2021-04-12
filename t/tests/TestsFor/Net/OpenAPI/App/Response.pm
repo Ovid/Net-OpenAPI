@@ -2,7 +2,7 @@ package TestsFor::Net::OpenAPI::App::Response;
 
 # vim: textwidth=200
 
-use Mojo::JSON 'decode_json';
+use Net::OpenAPI::App::JSON 'decode_json';
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::StatusCodes qw(HTTPOK);
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';

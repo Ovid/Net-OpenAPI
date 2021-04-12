@@ -3,7 +3,6 @@ package Net::OpenAPI::Utils::ReWrite;
 # ABSTRACT: Safely rewrite parts of documents
 
 use Moo;
-use Mojo::File;
 use Net::OpenAPI::Utils::Core qw(
   trim
 );
