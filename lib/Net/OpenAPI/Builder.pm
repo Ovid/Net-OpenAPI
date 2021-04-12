@@ -332,17 +332,14 @@ sub _app_template {
         
         sub get_app {
             return sub {
-                my $req   = Plack::Request->new(shift);
+                my $req = Plack::Request->new(shift);
                 my ( $action, $match ) = $router->match($req)
                   or return $req->new_response(404)->finalize;
-        
-                my $res        = $req->new_response(200);
-                $res->content_type('application/json');
-                my $result;
+
+                my ( $result, $res );
                 if ( eval { $result = $action->( $req, $match ); 1 } ) {
-        
                     if ( blessed $result && $result->isa('Net::OpenAPI::App::Response') ) {
-        
+
                         # they've returned a response object. Use it.
                         $res = $req->new_response( $result->status_code );
                         if ( my $body = $result->body ) {
@@ -351,19 +348,19 @@ sub _app_template {
                         }
                     }
                     elsif ( ref $result ) {
-        
+
                         # they've returned a raw data structure as a shortcut. Use it.
                         $res = $req->new_response(HTTPOK);
                         $res->content_type('application/json');
                         $res->body( encode_json($result) );
                     }
-                    $res->finalize;
                 }
                 else {
                     # XXX eval failed. Need more info here.
                     warn $@;
                     $res = $req->new_response(HTTPInternalServerError);
                 }
+                return $res->finalize;
             };
         }
 

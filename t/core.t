@@ -8,6 +8,7 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Builder;
 use File::Temp qw(tempdir);
 use File::Spec::Functions qw(catfile);
+use Net::OpenAPI::App::JSON qw(:all);
 use lib 'lib', 't/lib';
 
 explain <<'END';
@@ -47,8 +48,12 @@ is $res->content_type, 'text/html', '... and it should be an HTML document';
 ok $res = $plack->request( GET '/api/v1/pet/3' ), 'We should be able to try to fetch something valid';
 is $res->code, HTTPNotImplemented, '... but get a Not Implemented error';
 
-# XXX I would test this, but I want us to standardize on a JSON decode/encode solution first
-explain $res->content;
+my $expected = {
+    'code'  => 501,
+    'error' => 'Not Implemented',
+    'info'  => 'get /pet/{petId}'
+};
+eq_or_diff decode_json( $res->content ), $expected, '... and a JSON body explaining what is going on';
 
 ok $res = $plack->request( PUT '/api/pet/3' ), 'We should be able to send a message to a non-existent route';
 is $res->code, HTTPNotFound, '... but get a Not Found error';
