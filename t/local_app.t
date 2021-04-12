@@ -47,16 +47,21 @@ ok my $res = $plack->request( GET '/api/v1/pet/3' ), 'We should be able to try t
 is $res->code, HTTPOK, '... and get something valid';
 
 my $expected = {
-    'category' => {
-        'id'   => 1,
-        'name' => 'Dogs'
+    category => {
+        id   => 1,
+        name => 'Dogs'
     },
-    'id'        => '3',
-    'name'      => 'doggie',
-    'photoUrls' => ['string'],
-    'status'    => 'available',
-    'tags'      => [ {} ]
+    id        => 3,
+    name      => 'doggie',
+    photoUrls => ['string'],
+    status    => 'available',
+    tags      => [ {} ]
 };
+eq_or_diff decode_json( $res->content ), $expected, '... and get the correct data';
+
+$expected->{id} = 17;
+ok $res = $plack->request( GET '/api/v1/pet/17' ), 'We should be able to try to fetch a pet';
+is $res->code, HTTPOK, '... and get something valid';
 eq_or_diff decode_json( $res->content ), $expected, '... and get the correct data';
 
 ok $res = $plack->request( PUT '/api/pet/3' ), 'We should be able to send a message to a non-existent route';
