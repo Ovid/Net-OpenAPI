@@ -9,9 +9,8 @@ use Net::OpenAPI::Utils::File qw(slurp);
 use Net::OpenAPI::App::JSON qw(decode_json);
 
 sub test_serialization {
-    my $test       = shift;
-    my $raw_schema = decode_json( slurp('data/v3-petstore.json') );
-    ok my $validator = $test->class_name->new( raw_schema => $raw_schema ),
+    my $test = shift;
+    ok my $validator = $test->class_name->new( json => 'data/v3-petstore.json' ),
       'We should be able to create our validator object';
     my $expected = {
         properties => {

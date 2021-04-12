@@ -6,6 +6,8 @@ use Moo;
 use Storable 'dclone';
 use Scalar::Util 'blessed';
 use Net::OpenAPI::Policy;
+use Net::OpenAPI::App::JSON qw(decode_json);
+use Net::OpenAPI::Utils::File qw(slurp);
 use Net::OpenAPI::App::Types qw(
   HashRef
   InstanceOf
@@ -40,6 +42,24 @@ has _schema_as_perl => (
         return $self->_resolve_component;
     }
 );
+
+=head1 CONSTRUCTOR
+
+    my $validator = Net::OpenAPI::App::Validator->new( json => '/path/to/openapi.json' );
+
+Returns an instance of L<Net::OpenAPI::App::Validator>.
+
+=cut
+
+around BUILDARGS => sub {
+    my ( $orig, $class, @args ) = @_;
+    my $args = $class->$orig(@args);
+
+    if ( my $file = delete $args->{json} ) {
+        $args->{raw_schema} = decode_json( slurp($file) );
+    }
+    return $args;
+};
 
 =head2 C<get_component(@path)>
 
