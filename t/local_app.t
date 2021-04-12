@@ -1,12 +1,30 @@
 #!/usr/bin/env perl
 
+use lib 'lib', 't/test_app/lib';
+
 use Test::Most;
 use Plack::Test;
 use HTTP::Request::Common;
-use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPNotImplemented HTTPNotFound);
-use Net::OpenAPI::Policy;
+
 use Net::OpenAPI::App::JSON ':all';
-use lib 'lib', 't/test_app/lib';
+use Net::OpenAPI::App::StatusCodes qw(HTTPOK HTTPNotImplemented HTTPNotFound);
+use Net::OpenAPI::Builder;
+use Net::OpenAPI::Policy;
+
+BEGIN {
+    explain <<'END';
+We use the builder to deliberately rewrite our test application every time
+this test is run. That way, we can verify that local changes we make to the
+application are not overwritten.
+END
+    Net::OpenAPI::Builder->new(
+        schema_file => 'data/v3-petstore.json',
+        base        => 'My::Project::OpenAPI',
+        dir         => 't/test_app',
+        api_base    => '/api/v1',
+        doc_base    => '/api/docs',
+    )->write;
+}
 use My::Project::OpenAPI::App;    # in t/test_app
 
 my $app;
