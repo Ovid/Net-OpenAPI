@@ -10,6 +10,5 @@ __END__
 
 =head1 APOLOGY
 
-Sorry, not much here right now. Run the F<write.pl> executable in the
-top-level directory and examine the resulting C<target/> directory
-to see the output.
+Sorry, not much here right now. Run the F<example/write.pl> executable and
+examine the resulting C<target/> directory to see the output.

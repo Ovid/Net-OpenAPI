@@ -5,12 +5,12 @@ package Net::OpenAPI::Utils::Core;
 # Be very careful about circular dependencies against this file
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::App::Types qw(
-    Bool
-    Dict
-    Directory
-    NonEmptyStr
-    Optional
-    compile_named
+  Bool
+  Dict
+  Directory
+  NonEmptyStr
+  Optional
+  compile_named
 );
 
 use Perl::Tidy 'perltidy';
@@ -20,11 +20,16 @@ use base 'Exporter';
 our @EXPORT_OK = qw(
   get_path_and_filename
   get_path_prefix
+  normalize_string
+  openapi_to_path_router
+  path_router_to_openapi
+  resolve_endpoint
   resolve_method
   resolve_package
   resolve_root
   tidy_code
   trim
+  unindent
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
@@ -109,10 +114,56 @@ all non-word characters removed. Frequently used to create package names.
 sub resolve_root {
     my $path = shift;
     my ( $root, undef ) = grep {/\S/} split m{/} => $path;
-    return ucfirst _normalize_string($root);
+    return ucfirst normalize_string($root);
 }
 
-=head2 C<resolve_method($package_base, $http_method, $path)>
+=head2 C<openapi_to_path_router($openapi_path)>
+
+    my $path = openapi_to_path_router('/pet/{petID}');
+    # /pet/:petId
+
+Converts the OpenAPI path spec to a format that L<Path::Router>, L<Dancer2> and
+other common Perl tools recognize.
+
+=cut
+
+sub openapi_to_path_router {
+    my $path = shift;
+    $path =~ s/{([^\/}]+)}/:$1/g;
+    return $path;
+}
+
+=head2 C<path_router_to_openapi>
+
+    my $path = openapi_to_path_router('/pet/:petID');
+    # /pet/{petId}
+
+Reverses the process of C<openapi_to_path_router>.
+
+=cut
+
+sub path_router_to_openapi {
+    my $path = shift;
+    $path =~ s/\/:([^\/;]+)/\/{$1}/g;
+    return $path;
+}
+
+=head2 C<resolve_endpoint>
+
+    my ( $http_method, $path, $method, $args ) = resolve_method("get /store/order/{orderId}");
+
+Similar to C<resolve_method>, but takes an endpoint name.
+
+=cut
+
+sub resolve_endpoint {
+    my $endpoint = shift;
+    my ( $http_method, $path ) = split /\s+/ => trim($endpoint), 2;
+    $http_method = lc $http_method;
+    return ( $http_method, $path, resolve_method( $http_method, $path ) );
+}
+
+=head2 C<resolve_method($http_method, $path)>
 
     my ( $method, $args ) = resolve_method(
         'get',  # or GET (http method)
@@ -165,7 +216,7 @@ sub get_path_prefix {
     if ( $prefix =~ /^{/ ) {
         croak("Prefix must not be a path variable: $prefix");
     }
-    return ucfirst _normalize_string($prefix);
+    return ucfirst normalize_string($prefix);
 }
 
 =head2 C<tidy_code($code)>
@@ -194,11 +245,45 @@ sub tidy_code {
     return $tidied;
 }
 
-sub _normalize_string {
+=head2 C<normalize_string($string)>
+
+    $string = normalize_string($string);
+
+Unidecodes the string and then strips all non-word characters.
+
+=cut
+
+sub normalize_string {
     my $string = shift;
     $string = unidecode($string);
     $string =~ s/\W//g;
     return $string;
 }
 
+=head2 C<unindent($string)>
+
+	$string = unindent($string);
+
+Unindent's string, using the length of leading spaces of the first line as the
+amount to unindent by.
+
+If any subsequent line has leading spaces less than the first line, this code will
+C<croak()> with an appropriate error message.
+
+Note that we assume spaces, not tabs.
+
+=cut
+
+sub unindent {
+    my $str = shift;
+    my $min = $str =~ /^(\s+)/ ? length($1) : 0;
+    if ( $min > 0 ) {
+        my $less_than = $min - 1;
+        if ( $str =~ /^([ ]{0,$less_than}\b.*)$/m ) {
+            croak("unindent() failed with line found with indentation less than '$min':\n[$1]");
+        }
+    }
+    $str =~ s/^[ ]{0,$min}//gm if $min;
+    return $str;
+}
 1;

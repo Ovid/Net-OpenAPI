@@ -6,6 +6,7 @@ use Moo;
 use Storable 'dclone';
 use Scalar::Util 'blessed';
 use Net::OpenAPI::Policy;
+use Net::OpenAPI::App::JSON qw(decode_json);
 use Net::OpenAPI::Utils::File qw(slurp);
 use Net::OpenAPI::App::Types qw(
   HashRef
@@ -13,25 +14,24 @@ use Net::OpenAPI::App::Types qw(
   NonEmptyStr
 );
 
-use Mojo::JSON qw(decode_json);
+#use JSON::Validator::Schema::OpenAPIv2;
 use JSON::Validator::Schema::OpenAPIv3;
 use namespace::autoclean;
+
+has raw_schema => (
+    is       => 'ro',
+    isa      => HashRef,
+    required => 1,
+);
 
 has _validator => (
     is      => 'lazy',
     isa     => InstanceOf ['JSON::Validator::Schema::OpenAPIv3'],
     builder => sub {
         my $self = shift;
-        return JSON::Validator::Schema::OpenAPIv3->new( decode_json( slurp( $self->_schema ) ) );
+        return JSON::Validator::Schema::OpenAPIv3->new( $self->raw_schema );
     },
-    handles => ['schema'],
-);
-
-has _schema => (
-    is       => 'ro',
-    isa      => NonEmptyStr,
-    required => 1,
-    init_arg => 'schema',
+    handles => [ 'schema', 'errors' ],
 );
 
 has _schema_as_perl => (
@@ -42,6 +42,24 @@ has _schema_as_perl => (
         return $self->_resolve_component;
     }
 );
+
+=head1 CONSTRUCTOR
+
+    my $validator = Net::OpenAPI::App::Validator->new( json => '/path/to/openapi.json' );
+
+Returns an instance of L<Net::OpenAPI::App::Validator>.
+
+=cut
+
+around BUILDARGS => sub {
+    my ( $orig, $class, @args ) = @_;
+    my $args = $class->$orig(@args);
+
+    if ( my $file = delete $args->{json} ) {
+        $args->{raw_schema} = decode_json( slurp($file) );
+    }
+    return $args;
+};
 
 =head2 C<get_component(@path)>
 
@@ -66,9 +84,9 @@ sub get_component {
     return dclone($schema);
 }
 
-=head2 C<parameters_for_request( $method, $path )>
+=head2 C<parameters_for_request( [ $method, $path ] )>
 
-    my $params = $validator->parameters_for_request( 'GET', '/path/to/{something}' );
+    my $params = $validator->parameters_for_request( [ 'GET', '/path/to/{something}' ] );
 
 Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_request> method,
 but we fully expand C<$ref>s and booleans.
@@ -76,15 +94,15 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_request {
-    my ($self, $method, $path ) = @_;
-    my $params = $self->_validator->parameters_for_request($method, $path) or return;
-    my $resolver  = $self->_resolution_method($params);
+    my ( $self, $args ) = @_;
+    my $params   = $self->_validator->parameters_for_request($args) or return;
+    my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
 
-=head2 C<parameters_for_response( $method, $path )>
+=head2 C<parameters_for_response( [ $method, $path ] )>
 
-    my $params = $validator->parameters_for_response( 'GET', '/path/to/{something}' );
+    my $params = $validator->parameters_for_response( [ 'GET', '/path/to/{something}' ] );
 
 Like L<JSON::Validator::Schema::OpenAPIv3>'s C<parameters_for_response> method,
 but we fully expand C<$ref>s and booleans.
@@ -92,9 +110,9 @@ but we fully expand C<$ref>s and booleans.
 =cut
 
 sub parameters_for_response {
-    my ($self, $method, $path ) = @_;
-    my $params = $self->_validator->parameters_for_response($method, $path) or return;
-    my $resolver  = $self->_resolution_method($params);
+    my ( $self, $args ) = @_;
+    my $params   = $self->_validator->parameters_for_response($args) or return;
+    my $resolver = $self->_resolution_method($params);
     return $self->$resolver($params);
 }
 

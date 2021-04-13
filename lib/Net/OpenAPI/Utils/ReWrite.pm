@@ -3,7 +3,6 @@ package Net::OpenAPI::Utils::ReWrite;
 # ABSTRACT: Safely rewrite parts of documents
 
 use Moo;
-use Mojo::File;
 use Net::OpenAPI::Utils::Core qw(
   trim
 );
@@ -14,8 +13,8 @@ use Net::OpenAPI::App::Types qw(
 use Net::OpenAPI::Policy;
 use Digest::MD5 'md5_hex';
 
-sub _start_marker_format {'#<<<: do not touch any code between this and the end comment. Checksum: %s'}
-sub _end_marker_format   {'#>>>: do not touch any code between this and the start comment. Checksum: %s'}
+sub _start_marker_format {'#<<< do not touch any code between this and the end comment. Checksum: %s'}
+sub _end_marker_format   {'#>>> do not touch any code between this and the start comment. Checksum: %s'}
 
 has old_text => (
     is        => 'ro',
@@ -224,9 +223,9 @@ it:
 
 	# output:
 
-    #<<<: do not touch any code between this and the end comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
+    #<<< do not touch any code between this and the end comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
     Howdy, neighbor!
-    #>>>: do not touch any code between this and the start comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
+    #>>> do not touch any code between this and the start comment. Checksum: de563faeaa6b97eb6323abec39dc00c3
 
 You can then take the marked up document and insert it into another Perl
 document and use the rewrite mode to safely rewrite the code between the start

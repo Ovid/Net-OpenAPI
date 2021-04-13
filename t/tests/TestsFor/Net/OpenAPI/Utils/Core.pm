@@ -6,6 +6,31 @@ use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Core ':all';
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 
+sub test_path_rewriting {
+    my $test     = shift;
+    my %path_for = (
+        '/pet/'                   => '/pet/',
+        '/pet/find-by-status'     => '/pet/find-by-status',
+        '/pet/findByStatus'       => '/pet/findByStatus',
+        '/pet/findByTags'         => '/pet/findByTags',
+        '/pet/{petId}'            => '/pet/:petId',
+        '/pet/{petId}/and/{more}' => '/pet/:petId/and/:more',
+        '/store/inventory'        => '/store/inventory',
+        '/store/order'            => '/store/order',
+        '/store/order/'           => '/store/order/',
+        '/store/order/{orderId}'  => '/store/order/:orderId',
+        '/user/login'             => '/user/login',
+        '/user/logout'            => '/user/logout',
+        '/user/{username}'        => '/user/:username',
+        '/시티'                     => '/시티',
+        '/日本/{city}'              => '/日本/:city',
+    );
+    while ( my ( $before, $after ) = each %path_for ) {
+        is openapi_to_path_router($before), $after,  "openapi_to_path_router: '$before' should convert to '$after'";
+        is path_router_to_openapi($after),  $before, "path_router_to_openapi: '$after' should convert to '$before'";
+    }
+}
+
 sub test_resolve_method {
     my $test = shift;
 
@@ -49,19 +74,25 @@ sub test_resolve_method {
 
     my %seen;
     foreach my $http_method ( sort keys %results_for ) {
-        my %result_for = $results_for{$http_method}->%*;
+        my %result_for = %{ $results_for{$http_method} };
         foreach my $path ( sort keys %result_for ) {
-            my ( $expected_package, $expected_method, $expected_args ) = $result_for{$path}->@*;
+            my ( $expected_package, $expected_method, $expected_args ) = @{ $result_for{$path} };
             $expected_args //= [];
-            my $package = resolve_package('My::Project', 'Model', $path);
-            my ( $method, $args ) = resolve_method( $http_method, $path );
-            if ( $seen{$http_method}{$path}{$package}{$method}++ ) {
-                croak("Oops! We already saw &$package\::$method via $http_method $path");
+            my $package = resolve_package( 'My::Project', 'Model', $path );
+            my ( $subname, $args ) = resolve_method( $http_method, $path );
+            if ( $seen{$http_method}{$path}{$package}{$subname}++ ) {
+                croak("Oops! We already saw &$package\::$subname via $http_method $path");
             }
             is $package, $expected_package,
               "$http_method $path should give us the correct package: $expected_package";
-            is $method,       $expected_method, "... and it should give us the correct method: $expected_method";
+            is $subname,      $expected_method, "... and it should give us the correct method: $expected_method";
             eq_or_diff $args, $expected_args,   "... and it should give us the correct arguments: @$expected_args";
+            my $endpoint = "$http_method $path";
+            my ( $http_method2, $path2, $subname2, $args2 ) = resolve_endpoint($endpoint);
+            is $subname2,      $subname,     'resolve_endpoint($endpoint) should resolve the endpoint name';
+            eq_or_diff $args2, $args,        '... and the args';
+            is $http_method2,  $http_method, '... and the http method';
+            is $path2,         $path,        '... and the path';
         }
     }
 }
@@ -75,4 +106,39 @@ sub test_get_path_prefix {
     is $prefix, 'PetSemetary', '... and get names suitable for using in classes';
 }
 
+sub test_unindent {
+    my $test = shift;
+    my $code = unindent(<<"    END");
+    package Some::Package;
+    
+    use v5.16.0;
+    use strict;
+    use warnings;
+        # keep this indentation
+      # and this
+    END
+    my $expected = <<"END";
+package Some::Package;
+
+use v5.16.0;
+use strict;
+use warnings;
+    # keep this indentation
+  # and this
+END
+    is $code, $expected, 'unindent() should properly unindent our code';
+
+    my $bad_indent = <<"    END";
+    package Some::Package;
+    
+  use v5.16.0;
+    use strict;
+    use warnings;
+        # keep this indentation
+      # and this
+    END
+    throws_ok { unindent($bad_indent) }
+    qr/\Qunindent() failed with line found with indentation less than '4'/,
+      'Unindenting anything with a line whose leading whitespaces are less than first line should fail';
+}
 1;

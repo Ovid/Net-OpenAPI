@@ -5,9 +5,12 @@ package TestsFor::Net::OpenAPI::App::Validator;
 use Net::OpenAPI::Policy;
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 
+use Net::OpenAPI::Utils::File qw(slurp);
+use Net::OpenAPI::App::JSON qw(decode_json);
+
 sub test_serialization {
     my $test = shift;
-    ok my $validator = $test->class_name->new( schema => 'data/v3-petstore.json' ),
+    ok my $validator = $test->class_name->new( json => 'data/v3-petstore.json' ),
       'We should be able to create our validator object';
     my $expected = {
         properties => {
@@ -53,8 +56,9 @@ sub test_serialization {
 }
 
 sub test_parameters_for_request_and_response {
-    my $test = shift;
-    ok my $validator = $test->class_name->new( schema => 'data/v3-petstore.json' ),
+    my $test       = shift;
+    my $raw_schema = decode_json( slurp('data/v3-petstore.json') );
+    ok my $validator = $test->class_name->new( raw_schema => $raw_schema ),
       'We should be able to create our validator object';
     my $request_params = $validator->parameters_for_request( [ 'put', '/pet' ] );
     my $expected       = {

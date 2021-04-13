@@ -8,9 +8,8 @@ version 0.01
 
 # APOLOGY
 
-Sorry, not much here right now. Run the `write.pl` executable in the
-top-level directory and examine the resulting `target/` directory
-to see the output.
+Sorry, not much here right now. Run the `example/petstore.pl` executable and
+examine the resulting `target/` directory to see the output.
 
 # AUTHOR
 
