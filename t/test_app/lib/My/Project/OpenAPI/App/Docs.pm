@@ -12,10 +12,26 @@ My::Project::OpenAPI::App::Docs - Net::OpenAPI docs
 
 =cut
 
-#<<< do not touch any code between this and the end comment. Checksum: ab06443827ec57f365f96e2dfaf00d99
+#<<< do not touch any code between this and the end comment. Checksum: a0bdade3863a3e593e55730218aa6997
+package My::Project::OpenAPI::App::Docs;
+
+use strict;
+use warnings;
+use Plack::Response;
+use Net::OpenAPI::App::Response;
+use Net::OpenAPI::App::StatusCodes ':all';
+
+=head1 NAME
+
+My::Project::OpenAPI::App::Docs - Net::OpenAPI docs
+
+=cut
+
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 33f71afe129b04a564961ca154a6122a
+
 sub index {
     my ( $class, $req ) = @_;
-    if ( my $path_info = $req->path_info) {
+    if ( my $path_info = $req->path_info ) {
         return $class->_get_docs($req);
     }
     else {
@@ -24,9 +40,9 @@ sub index {
 }
 
 sub _get_docs {
-    my ($class, $req) = @_;
+    my ( $class, $req ) = @_;
     my $path_info = $req->path_info;
-    my $docs = <<"END";
+    my $docs      = <<"END";
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,6 +70,7 @@ END
 }
 
 sub _get_index {
+
     # bless me father for I have sinned
     my $index = <<'END';
 <!DOCTYPE html>
@@ -82,7 +99,12 @@ END
     $res->body($index);
     return $res->finalize;
 }
-#>>> do not touch any code between this and the start comment. Checksum: ab06443827ec57f365f96e2dfaf00d99
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 33f71afe129b04a564961ca154a6122a
+
+
+1;
+#>>> do not touch any code between this and the start comment. Checksum: a0bdade3863a3e593e55730218aa6997
 
 
 1;

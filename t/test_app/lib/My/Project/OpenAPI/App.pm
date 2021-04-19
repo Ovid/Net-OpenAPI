@@ -2,7 +2,11 @@ package My::Project::OpenAPI::App;
 
 use lib '../../lib';
 
-#<<< do not touch any code between this and the end comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
+#<<< do not touch any code between this and the end comment. Checksum: 3c19ff287a28c449d5318e60f11bb354
+package My::Project::OpenAPI::App;
+
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
+
 use v5.16.0;
 use strict;
 use warnings;
@@ -63,10 +67,38 @@ sub get_app {
 sub doc_index {
     return sub {
         my $req = Plack::Request->new(shift);
-        return My::Project::OpenAPI::App::Docs->index($req)
+        return My::Project::OpenAPI::App::Docs->index($req);
     };
 }
-#>>> do not touch any code between this and the start comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
+
+
+1;
+
+__END__
+
+=head1 NAME
+
+My::Project::OpenAPI::App - Application module for My::Project::OpenAPI
+
+=head1 SYNOPSIS
+
+    use My::Project::OpenAPI::App;
+    use Net::OpenAPI::App::Router;
+
+    my $router = Net::OpenAPI::App::Router->new;
+    $router->add_routes(My::Project::OpenAPI::App->routes)
+
+=head1 METHODS
+
+=head2 C<routes>
+
+    my \$routes = My::Project::OpenAPI::App->routes;
+
+Class method. Returns an array reference of routes you can pass to
+C<&Net::OpenAPI::App::Router::add_routes>.
+#>>> do not touch any code between this and the start comment. Checksum: 3c19ff287a28c449d5318e60f11bb354
 
 
 1;
