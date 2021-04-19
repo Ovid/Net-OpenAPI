@@ -21,17 +21,19 @@ model and method incoming requests are directed to.
 
 =cut
 
-#<<< do not touch any code between this and the end comment. Checksum: cadd02d89b3cfe81d00cebd25f3b49b6
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 37e06fd56a7e244b88902d6492157ec9
+
 sub routes {
     return resolve_endpoints(
         'post /store/order',
         'get /store/inventory',
         'delete /store/order/{orderId}',
         'get /store/order/{orderId}',
-        
+
     );
 }
-#>>> do not touch any code between this and the start comment. Checksum: cadd02d89b3cfe81d00cebd25f3b49b6
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 37e06fd56a7e244b88902d6492157ec9
 
 =head1 ROUTES
 

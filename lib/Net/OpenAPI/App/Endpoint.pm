@@ -3,10 +3,10 @@ package Net::OpenAPI::App::Endpoint;
 # ABSTRACT: Define Net::OpenAPI endpoints
 
 use Net::OpenAPI::Policy;
-use Net::OpenAPI::Utils::Core qw(trim);
 use Net::OpenAPI::Utils::Core qw(
-  resolve_endpoint
   openapi_to_path_router
+  resolve_endpoint
+  trim
 );
 
 use Sub::Name;

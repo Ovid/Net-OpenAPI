@@ -31,14 +31,17 @@ sub test_template {
     my $expected = <<'END';
 Foo: oof
 
-#<<< do not touch any code between this and the end comment. Checksum: 46da8ccba0874e95c56493dc07144692
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 46da8ccba0874e95c56493dc07144692
+
 Bar: rab
-#>>> do not touch any code between this and the start comment. Checksum: 46da8ccba0874e95c56493dc07144692
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 46da8ccba0874e95c56493dc07144692
 
 
 Baz: zab
 END
     $test->is_multiline_text( $output, $expected, 'We should be able to generate a nice rewritable template' );
+    explain $output;
 }
 
 sub test_errors {

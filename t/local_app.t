@@ -30,6 +30,8 @@ END
     )->write;
 }
 use My::Project::OpenAPI::App;    # in t/test_app
+pass;
+done_testing; exit;
 
 my $app;
 {

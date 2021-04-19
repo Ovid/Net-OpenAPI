@@ -12,7 +12,6 @@ show some very messed up POD. Use the source, Luke.
 
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Template::Tiny;
-use Net::OpenAPI::Utils::ReWrite;
 use Net::OpenAPI::App::Types qw(
   compile_named
   NonEmptyStr
@@ -26,6 +25,7 @@ use Net::OpenAPI::Utils::Core qw(
   tidy_code
 );
 use Net::OpenAPI::Utils::File qw(write_file);
+use CodeGen::Protection qw(create_protected_code);
 use base 'Exporter';
 
 our @EXPORT_OK = qw(
@@ -58,7 +58,7 @@ sub template {
         unless ( @chunks == 3 ) {
             croak("Exactly two or zero rewrite boundaries allowed per template");
         }
-        $chunks[1] = Net::OpenAPI::Utils::ReWrite->add_checksums( $chunks[1] );
+        $chunks[1] = create_protected_code( type => 'Perl', protected_code => $chunks[1], tidy => 1, name => $arg_for->{name} );
         $output = join '' => @chunks;
     }
 

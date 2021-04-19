@@ -2,7 +2,10 @@ package My::Project::OpenAPI::App;
 
 use lib '../../lib';
 
-#<<< do not touch any code between this and the end comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
+package My::Project::OpenAPI::App;
+
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
+
 use v5.16.0;
 use strict;
 use warnings;
@@ -63,10 +66,11 @@ sub get_app {
 sub doc_index {
     return sub {
         my $req = Plack::Request->new(shift);
-        return My::Project::OpenAPI::App::Docs->index($req)
+        return My::Project::OpenAPI::App::Docs->index($req);
     };
 }
-#>>> do not touch any code between this and the start comment. Checksum: cbbac08ee95c2802f80ef94dbc1ea86e
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
 
 
 1;

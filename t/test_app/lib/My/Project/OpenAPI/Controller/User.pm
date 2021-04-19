@@ -21,7 +21,8 @@ model and method incoming requests are directed to.
 
 =cut
 
-#<<< do not touch any code between this and the end comment. Checksum: aba625e550ebbaa5b02b78d9a032c0ab
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 9d564414baadb87b89a7ffbda570897f
+
 sub routes {
     return resolve_endpoints(
         'post /user',
@@ -31,10 +32,11 @@ sub routes {
         'get /user/{username}',
         'put /user/{username}',
         'post /user/createWithList',
-        
+
     );
 }
-#>>> do not touch any code between this and the start comment. Checksum: aba625e550ebbaa5b02b78d9a032c0ab
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 9d564414baadb87b89a7ffbda570897f
 
 =head1 ROUTES
 

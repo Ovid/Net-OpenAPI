@@ -97,11 +97,11 @@ The following may be excluded:
 Add in L<namespace::autoclean>? We previously had it, but when we had
 compilation errors, we went from this:
 
-	Global symbol "$md5" requires explicit package name (did you forget to declare "my $md5"?) at lib/Net/OpenAPI/Utils/ReWrite.pm line 108.
-	lib/Net/OpenAPI/Utils/ReWrite.pm had compilation errors.
+	Global symbol "$md5" requires explicit package name (did you forget to declare "my $md5"?) at lib/Net/OpenAPI/Utils/Foo.pm line 108.
+	lib/Net/OpenAPI/Utils/Foo.pm had compilation errors.
 
 To this:
 
-	lib/Net/OpenAPI/Utils/ReWrite.pm had compilation errors.
+	lib/Net/OpenAPI/Utils/Foo.pm had compilation errors.
 
 This made debugging impossible. Removing L<namespace::autoclean> fixed the issue.

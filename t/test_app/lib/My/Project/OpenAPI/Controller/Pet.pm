@@ -21,7 +21,8 @@ model and method incoming requests are directed to.
 
 =cut
 
-#<<< do not touch any code between this and the end comment. Checksum: b21cf8f8842f10d1a40fe90ea973bbe0
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: a3006b89faab47c26ad26de8537abf3c
+
 sub routes {
     return resolve_endpoints(
         'post /pet',
@@ -32,10 +33,11 @@ sub routes {
         'get /pet/findByTags',
         'get /pet/findByStatus',
         'post /pet/{petId}/uploadImage',
-        
+
     );
 }
-#>>> do not touch any code between this and the start comment. Checksum: b21cf8f8842f10d1a40fe90ea973bbe0
+
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: a3006b89faab47c26ad26de8537abf3c
 
 =head1 ROUTES
 
@@ -178,18 +180,10 @@ Returns a single pet
 
 endpoint 'get /pet/{petId}' => sub {
     my ( $request, $params ) = @_;
-    my $response = {
-        id       => $params->mapping->{petId},
-        name     => "doggie",
-        category => {
-            id   => 1,
-            name => "Dogs"
-        },
-        photoUrls => ["string"],
-        tags      => [ {} ],
-        status    => "available"
-    };
-    return $response;
+    return Net::OpenAPI::App::Response->new(
+        status_code => HTTPNotImplemented,
+        body        => { error => 'Not Implemented', code => HTTPNotImplemented, info => 'get /pet/{petId}' },
+    );
 };
 
 =head2 C<post /pet/{petId}>
