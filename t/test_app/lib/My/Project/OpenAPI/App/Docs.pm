@@ -12,7 +12,6 @@ My::Project::OpenAPI::App::Docs - Net::OpenAPI docs
 
 =cut
 
-#<<< do not touch any code between this and the end comment. Checksum: a0bdade3863a3e593e55730218aa6997
 package My::Project::OpenAPI::App::Docs;
 
 use strict;
@@ -101,10 +100,6 @@ END
 }
 
 #>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 33f71afe129b04a564961ca154a6122a
-
-
-1;
-#>>> do not touch any code between this and the start comment. Checksum: a0bdade3863a3e593e55730218aa6997
 
 
 1;

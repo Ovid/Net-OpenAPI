@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 
-#<<< do not touch any code between this and the end comment. Checksum: e7653d52e37ab586befebacc1feee693
 #!/usr/bin/env perl
 
 #<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 9a1a6fa3e5cc31935426e1170098c7e0
@@ -21,4 +20,3 @@ builder {
 };
 
 #>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 9a1a6fa3e5cc31935426e1170098c7e0
-#>>> do not touch any code between this and the start comment. Checksum: e7653d52e37ab586befebacc1feee693
