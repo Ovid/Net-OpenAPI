@@ -154,10 +154,10 @@ t/app.t - Run xUnit tests
     prove -v t/app.t
 
     # run a single test class
-    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::ReWrite
+    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::File
 
     # run a single test class
-    prove -v t/app.t :: t/tests/TestsFor/Net/OpenAPI/Utils/ReWrite.pm
+    prove -v t/app.t :: t/tests/TestsFor/Net/OpenAPI/Utils/File.pm
 
-    # run test methods matching regex "test_rewrite"
-    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::ReWrite --method test_rewrite
+    # run test methods matching regex "test_utils"
+    prove -v t/app.t :: TestsFor::Net::OpenAPI::Utils::File --method test_utils
