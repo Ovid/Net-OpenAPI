@@ -10,11 +10,92 @@ has env => (
     required => 1,
 );
 
-
+sub DEBUG () {1}
 
 sub FOREIGNBUILDARGS {
     my ( $class, %arg_for ) = @_;
     return $arg_for{env};
+}
+
+sub _param_as_array {
+    my ( $name, $params ) = @_;
+    return
+       !exists $params->{$name}         ? []
+      : ref $params->{$name} eq 'ARRAY' ? $params->{$name}
+      :                                   [ $params->{$name} ];
+}
+
+sub _build_tx {
+    my ( $self, $route, $params, %content ) = @_;
+    my $url = $self->base_url->clone;
+    my ( $tx, %headers );
+
+    push @{ $url->path }, map { local $_ = $_; s,\{(\w+)\},{$params->{$1}//''},ge; $_ } grep {length} split '/',
+      $route->{path};
+
+    my @errors = $self->validator->validate_request(
+        [ @$route{qw(method path)} ],
+        {
+            body => sub {
+                my $name = shift;
+
+                if ( exists $params->{$name} ) {
+                    $content{json} = $params->{$name};
+                }
+                else {
+                    for ( 'body', sort keys %{ $self->ua->transactor->generators } ) {
+                        next unless exists $content{$_};
+                        $params->{$name} = $content{$_};
+                        last;
+                    }
+                }
+
+                return { exists => $params->{$name}, value => $params->{$name} };
+            },
+            formData => sub {
+                my $name  = shift;
+                my $value = _param_as_array( $name => $params );
+                $content{form}{$name} = $params->{$name};
+                return { exists => !!@$value, value => $value };
+            },
+            header => sub {
+                my $name  = shift;
+                my $value = _param_as_array( $name => $params );
+                $headers{$name} = $value;
+                return { exists => !!@$value, value => $value };
+            },
+            path => sub {
+                my $name = shift;
+                return { exists => exists $params->{$name}, value => $params->{$name} };
+            },
+            query => sub {
+                my $name  = shift;
+                my $value = _param_as_array( $name => $params );
+                $url->query->param( $name => $value );
+                return { exists => !!@$value, value => $value };
+            },
+        }
+    );
+
+    if (@errors) {
+        warn "[@{[ref $self]}] Validation for $route->{method} $url failed: @errors\n" if DEBUG;
+        $tx = Mojo::Transaction::HTTP->new;
+        $tx->req->method( uc $route->{method} );
+        $tx->req->url($url);
+        $tx->res->headers->content_type('application/json');
+        $tx->res->body( Mojo::JSON::encode_json( { errors => \@errors } ) );
+        $tx->res->code(400)->message( $tx->res->default_message );
+        $tx->res->error( { message => 'Invalid input', code => 400 } );
+    }
+    else {
+        warn "[@{[ref $self]}] Validation for $route->{method} $url was successful\n" if DEBUG;
+        $tx = $self->ua->build_tx( $route->{method}, $url, \%headers, defined $content{body} ? $content{body} : %content );
+    }
+
+    $tx->req->env->{operationId} = $route->{operation_id};
+    $self->emit( after_build_tx => $tx );
+
+    return $tx;
 }
 
 sub validation_data {

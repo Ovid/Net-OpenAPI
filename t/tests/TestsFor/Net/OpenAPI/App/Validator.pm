@@ -106,6 +106,7 @@ sub test_validation {
     ok my $validator = $test->class_name->new( json => 'data/v3-petstore.json' ),
       'We should be able to create our validator object';
     my @data = $req->validation_data;
+    $DB::single = 1;
     $data[-1]{path} = { petId => 'asdf' };
     my @response = $validator->_validator->validate_request(@data);
     explain \@response;
