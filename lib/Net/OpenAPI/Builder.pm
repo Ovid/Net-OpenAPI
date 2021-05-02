@@ -13,7 +13,7 @@ use Net::OpenAPI::Builder::Docs;
 use Net::OpenAPI::Builder::Endpoint;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::File qw(slurp write_file);
-use Net::OpenAPI::Utils::Template qw(template write_template);
+use Net::OpenAPI::Utils::Template qw(template);
 
 use Net::OpenAPI::Utils::Core qw(
   get_path_and_filename
@@ -293,11 +293,9 @@ has code => (
             template => $self->_app_template,
             data     => {
                 base        => $self->base,
-                template    => $self->_app_template,
                 docs        => $self->docs->package,
                 package     => $package,
                 controllers => \@controllers,
-                endpoints   => \@endpoints,
             },
             tidy => 1,
         );

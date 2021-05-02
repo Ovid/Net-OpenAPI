@@ -1,7 +1,5 @@
 package TestsFor::Net::OpenAPI::Utils::Template;
 
-# vim: textwidth=200
-
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 use Net::OpenAPI::Utils::Template qw(template);
 
@@ -52,7 +50,7 @@ sub test_errors {
         baz => undef,
     );
     throws_ok { template( name => 'example', template => $example_template, data => \%args ) }
-    qr/Undefined value in template path 'baz' in 'example' template./,
+    qr/Undefined value in template path 'baz'/,
       'Processing a template with undef or missing fields should generate an error';
 }
 
