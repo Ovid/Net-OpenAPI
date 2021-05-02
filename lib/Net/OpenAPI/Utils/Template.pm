@@ -11,7 +11,7 @@ show some very messed up POD. Use the source, Luke.
 =cut
 
 use Net::OpenAPI::Policy;
-use Net::OpenAPI::Utils::Template::Tiny;
+use Template::Tiny::Strict;
 use Net::OpenAPI::App::Types qw(
   compile_named
   NonEmptyStr
@@ -30,7 +30,6 @@ use base 'Exporter';
 
 our @EXPORT_OK = qw(
   template
-  write_template
 );
 use Const::Fast;
 const my $REWRITE_BOUNDARY => '###« REWRITE BOUNDARY »###';
@@ -44,13 +43,18 @@ sub template {
     );
     my $arg_for = $check->(@_);
 
-    my $template = Net::OpenAPI::Utils::Template::Tiny->new( name => $arg_for->{name} );
+    my $template = Template::Tiny::Strict->new( name => $arg_for->{name}, forbid_undef => 1, forbid_unused => 1 );
+
+    # FIXME
+    # We shouldn't be using a heuristic check here, but since we control the
+    # templates, this isn't too bad
+    my @rewrite_boundary = $arg_for->{template} =~ /\brewrite_boundary\b/ ? ( rewrite_boundary => $REWRITE_BOUNDARY ) : ();
 
     # Generate template results into a variable
     my $output = '';
     $template->process(
         \$arg_for->{template},
-        { %{ $arg_for->{data} }, rewrite_boundary => $REWRITE_BOUNDARY },
+        { %{ $arg_for->{data} }, @rewrite_boundary },
         \$output
     );
     my @chunks = split /$REWRITE_BOUNDARY/ => $output;
@@ -67,29 +71,6 @@ sub template {
     }
 
     return $output;
-}
-
-sub write_template {
-    state $check = compile_named(
-        template_name => NonEmptyStr,
-        template_data => HashRef,
-        path          => Directory,
-        file          => NonEmptyStr,
-        tidy          => Optional [Bool],
-    );
-    my $arg_for = $check->(@_);
-    my $result  = template(
-        $arg_for->{template_name},
-        $arg_for->{template_data},
-    );
-    if ( $arg_for->{tidy} ) {
-        tidy_code($result);
-    }
-    write_file(
-        path     => $arg_for->{path},
-        file     => $arg_for->{file},
-        document => $result,
-    );
 }
 
 1;
@@ -110,6 +91,6 @@ sub write_template {
 =head1 DESCRIPTION
 
 We use these templates to autogenerate our code. You must pass in the data required.
-See L<Net::OpenAPI::Utils::Template::Tiny> to understand template behavior.
+See L<Template::Tiny::Strict> to understand template behavior.
 
 1;

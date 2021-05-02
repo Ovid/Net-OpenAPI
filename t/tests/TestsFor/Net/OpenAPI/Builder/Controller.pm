@@ -39,7 +39,7 @@ sub test_controller {
                     my $response = $action->();
                     ok $response->isa('Net::OpenAPI::App::Response'), 'Default action behavior is to return a response object';
                     is $response->status_code, HTTPNotImplemented, '... with the "not implemented" response code';
-                    eq_or_diff $response->body, { error => 'Not Implemented', code => HTTPNotImplemented, info => path_router_to_openapi("$method $path" )},
+                    eq_or_diff $response->body, { error => 'Not Implemented', code => HTTPNotImplemented, info => path_router_to_openapi("$method $path") },
                       '... and a response body suitable for serialization into JSON';
                 }
             }

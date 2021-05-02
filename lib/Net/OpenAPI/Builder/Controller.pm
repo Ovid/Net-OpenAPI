@@ -132,7 +132,6 @@ has code => (
                 template => $self->_controller_template,
                 data     => {
                     package   => $self->package,
-                    template  => $self->_controller_template,
                     endpoints => \@endpoints,
                 },
                 tidy => 1,

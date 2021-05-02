@@ -1,7 +1,5 @@
 package TestsFor::Net::OpenAPI::Builder;
 
-# vim: textwidth=200
-
 use Net::OpenAPI::Policy;
 use Test::Class::Moose extends => 'Test::Net::OpenAPI';
 with 'Test::Net::OpenAPI::Role::Tempdir';

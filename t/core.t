@@ -12,7 +12,7 @@ use Net::OpenAPI::App::JSON qw(:all);
 use lib 'lib', 't/lib';
 
 explain <<'END';
-This test is in a .t file rather than in the xUnit tests because we haev a "do
+This test is in a .t file rather than in the xUnit tests because we have a "do
 $psgi" at one point. That litters our namespace with a bunch of extra code and
 we would like to isolate that from the xUnit tests.
 END
