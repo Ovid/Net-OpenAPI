@@ -1,5 +1,7 @@
 package Net::OpenAPI::Builder::Docs;
 
+# ABSTRACT: Generates the Redoc documentation for your project
+
 use Moo;
 use Net::OpenAPI::Policy;
 use Net::OpenAPI::Utils::Template qw(template);

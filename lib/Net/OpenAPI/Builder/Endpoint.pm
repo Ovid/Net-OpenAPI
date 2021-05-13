@@ -1,5 +1,7 @@
 package Net::OpenAPI::Builder::Endpoint;
 
+# ABSTRACT: Generates the endpoint (method) code.
+
 use Moo;
 use Net::OpenAPI::Policy;
 use Data::Dumper;

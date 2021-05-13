@@ -1,5 +1,7 @@
 package Net::OpenAPI::Builder::Controller;
 
+# ABSTRACT: Generates the controller code.
+
 use Moo;
 use Net::OpenAPI::Policy;
 use Data::Dumper;

@@ -63,6 +63,8 @@ If you wish to see the full documentation for your project, visit:
 
     http://0:5000/api/docs
 
+Documentation is generated with L<Redoc|https://github.com/Redocly/redoc>.
+
 Currently we don't yet validate input or output. We'd prefer to use
 L<JSON::Validator::Schema::OpenAPIv3>'s validation features for this.
 
