@@ -34,6 +34,8 @@ our @EXPORT_OK = qw(
 use Const::Fast;
 const my $REWRITE_BOUNDARY => '###« REWRITE BOUNDARY »###';
 
+our $VERSION = '0.01';
+
 sub template {
     state $check = compile_named(
         name     => NonEmptySimpleStr,

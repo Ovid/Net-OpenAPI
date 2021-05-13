@@ -19,6 +19,7 @@ use Net::OpenAPI::App::Types qw(
   PackageName
   Str
 );
+our $VERSION = '0.01';
 
 =head1 PARAMETERS
 

@@ -9,6 +9,7 @@ use Net::OpenAPI::App::Types qw(
   PackageName
   OpenAPIPath
 );
+our $VERSION = '0.01';
 
 =head1 PARAMETERS
 

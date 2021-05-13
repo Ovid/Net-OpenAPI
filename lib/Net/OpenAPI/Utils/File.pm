@@ -24,6 +24,7 @@ our @EXPORT_OK = qw(
   write_file
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+our $VERSION = '0.01';
 
 =head1 FUNCTIONS
 

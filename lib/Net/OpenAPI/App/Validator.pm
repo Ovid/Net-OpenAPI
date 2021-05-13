@@ -14,6 +14,8 @@ use Net::OpenAPI::App::Types qw(
   NonEmptyStr
 );
 
+our $VERSION = '0.01';
+
 #use JSON::Validator::Schema::OpenAPIv2;
 use JSON::Validator::Schema::OpenAPIv3;
 use namespace::autoclean;

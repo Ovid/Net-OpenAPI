@@ -13,6 +13,8 @@ use Try::Tiny;
 
 use Import::Into;
 
+our $VERSION = '0.01';
+
 sub import {
     my ( $class, %rule_for ) = @_;
 
@@ -104,4 +106,6 @@ To this:
 
 	lib/Net/OpenAPI/Utils/Foo.pm had compilation errors.
 
-This made debugging impossible. Removing L<namespace::autoclean> fixed the issue.
+This made debugging impossible. Removing L<namespace::autoclean> fixed the
+issue. It's unclear what caused this, but later we fixed a circular dependency
+which I<might> have been related to this error.

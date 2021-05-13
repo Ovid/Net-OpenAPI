@@ -12,6 +12,8 @@ use Net::OpenAPI::Utils::Core qw(
 use Sub::Name;
 use Sub::Install 'install_sub';
 
+our $VERSION = '0.01';
+
 sub import {
     my ( $class, %arg_for ) = @_;
     my $caller   = caller;

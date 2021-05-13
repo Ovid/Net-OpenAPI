@@ -40,6 +40,8 @@ Base package name for generated code
 
 =cut
 
+our $VERSION = '0.01';
+
 has base => (
     is       => 'ro',
     isa      => PackageName,

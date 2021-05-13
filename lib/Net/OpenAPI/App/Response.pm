@@ -11,6 +11,8 @@ use Net::OpenAPI::App::Types qw(
 );
 use namespace::autoclean;
 
+our $VERSION = '0.01';
+
 has status_code => (
     is       => 'ro',
     isa      => HTTPStatusCode,

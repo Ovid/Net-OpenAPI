@@ -32,6 +32,7 @@ our @EXPORT_OK = qw(
   unindent
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+our $VERSION = '0.01';
 
 =head2 C<get_path_and_filename($dir, $package_name)>
 

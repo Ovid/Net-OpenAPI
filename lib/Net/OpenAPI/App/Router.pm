@@ -23,6 +23,7 @@ use Net::OpenAPI::Utils::Core qw(
   get_path_prefix
 );
 
+our $VERSION = '0.01';
 my $verbose = 0;
 
 has _router => (

@@ -20,7 +20,7 @@ use Type::Utils -all;
 # this gets us compile and compile_named
 use Type::Params;
 
-our $VERSION = '0.07';
+our $VERSION = '0.01';
 
 our @EXPORT_OK;
 
