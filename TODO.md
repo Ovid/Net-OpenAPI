@@ -1,15 +1,20 @@
-* Switch to https://metacpan.org/pod/Path::Router
-* Testing
-* Logging
-* XML: https://swagger.io/docs/specification/data-models/representing-xml/
-    - If we don't have XML output, we're screwed
+# Critical:
+
+* Use JSON::Validator::Schema::OpenAPIv3's ability to validate input and output
+
+# Important
+
+* Support OpenAPI v2
+* Versioning (app versioning)
+* Data-driven testing
 * Allow names to be remapped (similar to Schema loader)
 * Text::UniDecode to allow for non-ascii routes
-* Versioning (OpenAPI v1 and v2)
-* Versioning (app versioning)
-* Hooks to run multiple apps
 * Map OpenAPI types to Net::OpenAPI::App::Types
 * Do we need to convert OpenAPI regexes to Perl's regexes?
+
+# Maybe out of scope
+
+* XML: https://swagger.io/docs/specification/data-models/representing-xml/
 * App and API keys
 * API dependencies
     - Api registry/repository
