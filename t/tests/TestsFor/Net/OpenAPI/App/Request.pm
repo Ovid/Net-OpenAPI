@@ -14,8 +14,8 @@ sub test_basics {
     my $path_info = $req->path_info;
     my $query     = $req->query_parameters;
 
-    is $req->method,    'GET',    '... and get the correct method';
-    is $req->path_info, '/pet/5', '... and get the correct path info';
+    is $req->method, 'GET', '... and get the correct method';
+    is $req->path_info, '/api/v1/pet/5?foo=bar&baz=42', '... and get the correct path info';
     eq_or_diff [ $query->get_all('foo') ], ['bar'], '... we should be able to get our query params';
     eq_or_diff [ $query->get_all('baz') ], [42],    '... we should be able to get our query params';
     my $headers = [
