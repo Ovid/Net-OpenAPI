@@ -4,13 +4,13 @@ use lib '../../lib';
 
 package My::Project::OpenAPI::App;
 
-#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
+#<<< CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the end comment. Checksum: d5dd1e2efbabc3940ca9d409e007c617
 
 use v5.16.0;
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
-use Plack::Request;
+use Net::OpenAPI::App::Request;
 
 use Net::OpenAPI::App::JSON qw(encode_json);
 use Net::OpenAPI::App::Router;
@@ -27,13 +27,22 @@ my $routes = [
     My::Project::OpenAPI::Controller::User->routes,
 ];
 
-my $router = Net::OpenAPI::App::Router->new( routes => $routes );
+my $router    = Net::OpenAPI::App::Router->new( routes => $routes );
+my $validator = Net::OpenAPI::App::Validator->new( json => 'data/v3-petstore.json' );
 
 sub get_app {
     return sub {
-        my $req = Plack::Request->new(shift);
+        my $env = shift;
+        my $req = Net::OpenAPI::App::Request->new( env => $env );
         my ( $action, $match ) = $router->match($req)
           or return $req->new_response(404)->finalize;
+      # need $route->{path,method} $params->{$name}
+      #      $DB::single = 1;
+      my $errors = $req->validate($validator);
+      if ( @$errors) {
+          print STDERR join "\n" => @$errors;
+          return;
+      }  
 
         my ( $result, $res );
         if ( eval { $result = $action->( $req, $match ); 1 } ) {
@@ -70,7 +79,7 @@ sub doc_index {
     };
 }
 
-#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: 3f30b4310b17c9de4c42431c6d769a1f
+#>>> CodeGen::Protection::Format::Perl 0.05. Do not touch any code between this and the start comment. Checksum: d5dd1e2efbabc3940ca9d409e007c617
 
 
 1;

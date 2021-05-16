@@ -33,7 +33,7 @@ has _validator => (
         my $self = shift;
         return JSON::Validator::Schema::OpenAPIv3->new( $self->raw_schema );
     },
-    handles => [ 'schema', 'errors' ],
+    handles => [ qw/schema errors validate_request /],
 );
 
 has _schema_as_perl => (

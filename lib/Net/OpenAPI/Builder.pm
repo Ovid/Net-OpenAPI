@@ -316,7 +316,7 @@ sub _app_template {
         use strict;
         use warnings;
         use Scalar::Util 'blessed';
-        use Plack::Request;
+        use Net::OpenAPI::App::Request;
         
         use Net::OpenAPI::App::JSON qw(encode_json);
         use Net::OpenAPI::App::Router;
@@ -333,7 +333,8 @@ sub _app_template {
         
         sub get_app {
             return sub {
-                my $req = Plack::Request->new(shift);
+                my $env = shift;
+                my $req = Net::OpenAPI::App::Request->new( env => $env);
                 my ( $action, $match ) = $router->match($req)
                   or return $req->new_response(404)->finalize;
 

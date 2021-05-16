@@ -180,10 +180,18 @@ Returns a single pet
 
 endpoint 'get /pet/{petId}' => sub {
     my ( $request, $params ) = @_;
-    return Net::OpenAPI::App::Response->new(
-        status_code => HTTPNotImplemented,
-        body        => { error => 'Not Implemented', code => HTTPNotImplemented, info => 'get /pet/{petId}' },
-    );
+
+    return {
+        category => {
+            id   => 1,
+            name => 'Dogs'
+        },
+        id        => $params->mapping->{petId},
+        name      => 'doggie',
+        photoUrls => ['string'],
+        status    => 'available',
+        tags      => [ {} ]
+    };
 };
 
 =head2 C<post /pet/{petId}>

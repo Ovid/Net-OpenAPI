@@ -10,6 +10,7 @@ with 'Test::Net::OpenAPI::Role::Request';
 
 sub test_basics {
     my $test = shift;
+    $DB::single = 1;
     ok my $req = $test->get_request( get => '/api/v1/pet/5?foo=bar&baz=42' ), 'We should be able to fetch a request';
     my $path_info = $req->path_info;
     my $query     = $req->query_parameters;

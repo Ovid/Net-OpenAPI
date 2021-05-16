@@ -21,17 +21,23 @@ Note: if we've done this correctly, this should result in *no* changes to the
 files. If git says something has changed in t/test_app/ and we weren't expecting
 it, it's time to investigate.
 END
-    Net::OpenAPI::Builder->new(
-        schema_file => 'data/v3-petstore.json',
-        base        => 'My::Project::OpenAPI',
-        dir         => 't/test_app',
-        api_base    => '/api/v1',
-        doc_base    => '/api/docs',
-    )->write;
+    if ($INC{"perl5db.pl"}) {
+        say <<'END';
+We appear to be running under the debugger, so we will not rebuild
+the project in order to ensure stability while debugging.
+END
+    }
+    else {
+        #        Net::OpenAPI::Builder->new(
+        #            schema_file => 'data/v3-petstore.json',
+        #            base        => 'My::Project::OpenAPI',
+        #            dir         => 't/test_app',
+        #            api_base    => '/api/v1',
+        #            doc_base    => '/api/docs',
+        #        )->write;
+    }
 }
 use My::Project::OpenAPI::App;    # in t/test_app
-pass;
-done_testing; exit;
 
 my $app;
 {
@@ -46,6 +52,7 @@ my $app;
 my $plack = Plack::Test->create($app);
 
 ok my $res = $plack->request( GET '/api/v1/pet/3' ), 'We should be able to try to fetch a pet';
+
 is $res->code, HTTPOK, '... and get something valid';
 
 my $expected = {
@@ -73,6 +80,7 @@ is $res->code, HTTPNotFound, '... but get a Not Found error';
 ok $res = $plack->request( POST '/api/v1/pet', Content_Type => 'application/JSon', Content => "{'foo':7}" ), 'We should be able to try to fetch a pet';
 is $res->code, HTTPNotImplemented, '... and it should not be implemented yet';
 
+done_testing; exit;
 # send url_encoded
 ok $res = $plack->request( POST '/api/v1/pet', Content => [ url_encoded => '1234567890' ] ), 'We should be able to try to fetch a pet';
 is $res->code, HTTPNotImplemented, '... and it should not be implemented yet';
@@ -80,4 +88,8 @@ is $res->code, HTTPNotImplemented, '... and it should not be implemented yet';
 # send multipart/formdata
 ok $res = $plack->request( POST '/api/v1/pet?foo=bar', Content_Type => 'form-data', Content => [ url_encoded => '1234567890' ] ),
   'We should be able to try to fetch a pet';
+
+ok $res = $plack->request( PUT '/api/v1/pet?foo=bar', [] ), 'Deliberately malformed request';
+explain $res;
+
 done_testing;
